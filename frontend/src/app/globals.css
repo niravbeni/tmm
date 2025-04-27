@@ -137,22 +137,28 @@ a[aria-label="Vercel Logo"] {
 .selected-card {
   border: 2px solid var(--button-bg);
   transform: none;
+  box-sizing: border-box;
 }
 
 /* Desktop-only selected card styling */
 @media (min-width: 769px) {
   .md\:selected-card {
     border: 2px solid #000000 !important;
-    transform: none;
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
     outline: none;
+    z-index: 10;
+    box-sizing: border-box;
+    position: relative;
   }
 }
 
-@media (max-width: 768px) {
-  .selected-card, .md\:selected-card {
-    border: none;
-    transform: none;
-  }
+/* Remove borders on results page only */
+.results-page .selected-card,
+.results-page .md\:selected-card {
+  border: none !important;
+  transform: none !important;
+  outline: none;
 }
 
 /* Card styling */

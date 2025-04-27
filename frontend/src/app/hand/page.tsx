@@ -5,6 +5,38 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useSocket } from '@/context/SocketContext';
 
+// Team colors array (12 distinct pastel colors)
+const TEAM_COLORS = [
+  'bg-red-200',
+  'bg-blue-200',
+  'bg-green-200',
+  'bg-yellow-200',
+  'bg-purple-200',
+  'bg-pink-200',
+  'bg-indigo-200',
+  'bg-orange-200',
+  'bg-teal-200',
+  'bg-cyan-200',
+  'bg-emerald-200',
+  'bg-amber-200',
+];
+
+// Team text colors for contrast
+const TEAM_TEXT_COLORS = [
+  'text-red-800',
+  'text-blue-800',
+  'text-green-800',
+  'text-yellow-800',
+  'text-purple-800',
+  'text-pink-800',
+  'text-indigo-800',
+  'text-orange-800',
+  'text-teal-800',
+  'text-cyan-800',
+  'text-emerald-800',
+  'text-amber-800',
+];
+
 export default function HandPage() {
   const { socket, gameState, teamName, isLoading } = useSocket();
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -120,19 +152,34 @@ export default function HandPage() {
 
   const team = gameState.teams[teamName];
   
+  // Get team color based on team index
+  const getTeamColor = (teamId: string): string => {
+    if (!gameState?.teams) return 'bg-gray-200';
+    const teamIndex = Object.keys(gameState.teams).indexOf(teamId);
+    return teamIndex >= 0 ? TEAM_COLORS[teamIndex % TEAM_COLORS.length] : 'bg-gray-200';
+  };
+
+  // Get team text color based on team index
+  const getTeamTextColor = (teamId: string): string => {
+    if (!gameState?.teams) return 'text-gray-800';
+    const teamIndex = Object.keys(gameState.teams).indexOf(teamId);
+    return teamIndex >= 0 ? TEAM_TEXT_COLORS[teamIndex % TEAM_TEXT_COLORS.length] : 'text-gray-800';
+  };
+  
   // Render a card from the player's hand
   const renderHandCard = (card: string, index: number) => (
     <div
       key={card}
-      className="relative cursor-pointer p-1.5 md:p-1 clickable"
+      className="relative cursor-pointer p-2 md:p-3 clickable"
       onClick={() => setSelectedCard(index)}
     >
       <div 
-        className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${
+        className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden ${
           selectedCard === index ? 'md:selected-card' : ''
         }`}
         style={{
-          border: !isMobile && selectedCard === index ? '2px solid #000000' : 'none'
+          border: !isMobile && selectedCard === index ? '2px solid #000000' : 'none',
+          boxSizing: 'border-box'
         }}
       >
         <Image
@@ -176,12 +223,12 @@ export default function HandPage() {
             Hand
           </div>
           {teamName && (
-            <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            <div className={`status-badge ${getTeamColor(teamName)} ${getTeamTextColor(teamName)}`}>
               Team: {teamName}
             </div>
           )}
           {gameState.storytellerTeam === teamName && (
-            <div className="ml-auto status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            <div className={`ml-auto status-badge ${getTeamColor(teamName)} ${getTeamTextColor(teamName)}`}>
               Storyteller
             </div>
           )}

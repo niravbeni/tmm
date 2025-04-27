@@ -5,6 +5,38 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useSocket } from '@/context/SocketContext';
 
+// Team colors array (12 distinct pastel colors)
+const TEAM_COLORS = [
+  'bg-red-200',
+  'bg-blue-200',
+  'bg-green-200',
+  'bg-yellow-200',
+  'bg-purple-200',
+  'bg-pink-200',
+  'bg-indigo-200',
+  'bg-orange-200',
+  'bg-teal-200',
+  'bg-cyan-200',
+  'bg-emerald-200',
+  'bg-amber-200',
+];
+
+// Team text colors for contrast
+const TEAM_TEXT_COLORS = [
+  'text-red-800',
+  'text-blue-800',
+  'text-green-800',
+  'text-yellow-800',
+  'text-purple-800',
+  'text-pink-800',
+  'text-indigo-800',
+  'text-orange-800',
+  'text-teal-800',
+  'text-cyan-800',
+  'text-emerald-800',
+  'text-amber-800',
+];
+
 export default function ResultsPage() {
   const { socket, gameState, teamName, isLoading } = useSocket();
   const [showResetModal, setShowResetModal] = useState(false);
@@ -88,6 +120,18 @@ export default function ResultsPage() {
       .map(([voterTeam]) => voterTeam);
   };
 
+  // Get team color based on team index
+  const getTeamColor = (teamId: string): string => {
+    const teamIndex = Object.keys(gameState.teams).indexOf(teamId);
+    return teamIndex >= 0 ? TEAM_COLORS[teamIndex % TEAM_COLORS.length] : 'bg-gray-200';
+  };
+
+  // Get team text color based on team index
+  const getTeamTextColor = (teamId: string): string => {
+    const teamIndex = Object.keys(gameState.teams).indexOf(teamId);
+    return teamIndex >= 0 ? TEAM_TEXT_COLORS[teamIndex % TEAM_TEXT_COLORS.length] : 'text-gray-800';
+  };
+
   // Render a card with its voters
   const renderCard = (playedCard: any, index: number, isFull = false) => {
     const voters = getVotersForCard(index);
@@ -96,15 +140,16 @@ export default function ResultsPage() {
     const isWinner = voters.length > 0 && 
       getVotersForCard(index).length === Math.max(...gameState.playedCards.map((_, i) => getVotersForCard(i).length));
     
+    const teamColor = getTeamColor(playedCard.teamName);
+    const teamTextColor = getTeamTextColor(playedCard.teamName);
+    
     return (
       <div 
         key={index} 
-        className={`relative p-1 w-full max-w-[160px] h-auto mx-auto ${
-          isWinner ? 'selected-card' : ''
-        }`}
+        className="relative p-1.5 w-full max-w-[180px] h-auto mx-auto"
       >
-        <div className={`game-card bg-gray-100 dark:bg-gray-800`}>
-          <div className={`bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
+        <div className="overflow-hidden">
+          <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
             {playedCard.teamName}
             {isStorytellerCard && <span className="ml-1">★</span>}
           </div>
@@ -112,8 +157,8 @@ export default function ResultsPage() {
             <Image
               src={`/cards/${playedCard.card}`}
               alt={`Card from team ${playedCard.teamName}`}
-              width={isFull ? 160 : 140}
-              height={isFull ? 233 : 204}
+              width={isFull ? 220 : 170}
+              height={isFull ? 320 : 247}
               className="w-full h-full object-cover"
               priority={isStorytellerCard}
               style={{
@@ -122,27 +167,21 @@ export default function ResultsPage() {
               }}
             />
           </div>
-          <div className="bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 py-1 px-2 text-center text-xs">
+          <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center text-xs`}>
             {voters.length} {voters.length === 1 ? 'vote' : 'votes'}
             {isWinner && voters.length > 0 && <span className="ml-1">★</span>}
           </div>
         </div>
         
-        {/* Voter pills below card */}
-        <div className="mt-2 mb-2 flex flex-wrap justify-center gap-1 min-h-[30px]">
-          {voters.length > 0 ? (
-            voters.map(voter => (
-              <span 
-                key={voter} 
-                className="text-xs px-2 py-0.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 truncate max-w-full"
-                title={voter}
-              >
-                {voter}
-              </span>
-            ))
-          ) : (
-            <span className="text-xs text-gray-400">No votes</span>
-          )}
+        {/* Voter color blocks below card */}
+        <div className="mt-1.5 grid grid-cols-6 gap-x-1 gap-y-1 w-full">
+          {voters.map((voter, index) => (
+            <div 
+              key={`${voter}-${index}`} 
+              className={`h-4 w-full ${getTeamColor(voter)}`} 
+              title={voter}
+            />
+          ))}
         </div>
       </div>
     );
@@ -161,14 +200,14 @@ export default function ResultsPage() {
   const nobodyFoundStoryteller = votesForStoryteller === 0;
   
   return (
-    <main className="flex flex-col h-full no-scroll">
+    <main className="flex flex-col h-full no-scroll results-page">
       <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
         {/* Header */}
         <div className="mb-2 flex items-center justify-between">
           <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
             Results - Round {gameState.roundNumber}
           </div>
-          <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+          <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
             Storyteller: {gameState.storytellerTeam}
           </div>
         </div>
@@ -188,7 +227,7 @@ export default function ResultsPage() {
         </div>
         
         {/* Main content */}
-        <div className="flex flex-col md:flex-row gap-2 h-[calc(100%-100px)]">
+        <div className="flex flex-col md:flex-row gap-3 h-[calc(100%-100px)]">
           {/* Scoreboard */}
           <div className="md:w-1/4 lg:w-1/5 flex-shrink-0 card flex flex-col h-full">
             <h2 className="text-sm font-bold p-2 border-b">Scoreboard</h2>
@@ -203,10 +242,12 @@ export default function ResultsPage() {
                 </thead>
                 <tbody>
                   {sortedTeams.map(([teamId, team], index) => (
-                    <tr key={teamId}>
-                      <td className="py-1 px-2 text-xs">{index + 1}</td>
-                      <td className="py-1 px-2 text-xs font-medium">{teamId}</td>
-                      <td className="py-1 px-2 text-xs text-right font-bold">{team.score}</td>
+                    <tr key={teamId} className={`${getTeamColor(teamId)}`}>
+                      <td className={`py-1 px-2 text-xs ${getTeamTextColor(teamId)}`}>{index + 1}</td>
+                      <td className={`py-1 px-2 text-xs font-medium ${getTeamTextColor(teamId)}`}>
+                        {teamId}
+                      </td>
+                      <td className={`py-1 px-2 text-xs text-right font-bold ${getTeamTextColor(teamId)}`}>{team.score}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -271,8 +312,8 @@ export default function ResultsPage() {
                   )}
                 </div>
               ) : (
-                // Desktop grid view
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 gap-y-5 w-full pb-2 h-full">
+                // Desktop grid view - adjust to fit 6 cards per row
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 gap-y-4 w-full h-full">
                   {gameState.playedCards.map((card, index) => renderCard(card, index))}
                 </div>
               )}
