@@ -244,7 +244,7 @@ export default function VotePage() {
     return (
       <div 
         key={shuffledIndex} 
-        className="relative p-0.5 cursor-pointer clickable"
+        className="relative p-1 cursor-pointer clickable"
         onClick={() => {
           setSelectedCard(shuffledIndex);
           if (isOwnCard && !isStoryteller) {
@@ -266,10 +266,9 @@ export default function VotePage() {
           <Image
             src={`/cards/${playedCard.card}`}
             alt={`Card option ${shuffledIndex + 1}`}
-            width={140}
-            height={205}
-            priority
-            className="h-full object-contain"
+            width={170}
+            height={250}
+            className="w-full h-full object-cover"
             style={{
               display: 'block',
               margin: 'auto'
@@ -361,7 +360,7 @@ export default function VotePage() {
         )}
         
         <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {isMobile ? (
               // Mobile view - carousel with swipe
               <div className="h-full flex flex-col">
@@ -409,14 +408,14 @@ export default function VotePage() {
               </div>
             ) : (
               // Desktop grid layout
-              <div className="grid grid-cols-6 gap-1 mx-auto w-full place-items-center px-0 pb-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-3 mx-auto w-full place-items-center px-0 pb-4">
                 {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
               </div>
             )}
           </div>
           
           {/* Submit button - fixed at bottom */}
-          <div className="py-4 flex justify-center mt-auto">
+          <div className="py-4 pt-6 flex justify-center mt-auto">
             <button
               onClick={handleSubmitVote}
               disabled={selectedCard === null || showOwnCardWarning || gameState.currentPhase === 'lobby'}
