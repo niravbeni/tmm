@@ -266,8 +266,8 @@ export default function VotePage() {
           <Image
             src={`/cards/${playedCard.card}`}
             alt={`Card option ${shuffledIndex + 1}`}
-            width={100}
-            height={145}
+            width={120}
+            height={175}
             className="w-full h-full object-cover"
             style={{
               display: 'block',
@@ -408,7 +408,7 @@ export default function VotePage() {
               </div>
             ) : (
               // Desktop grid layout
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-1 mx-auto w-full place-items-center px-0">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-2 mx-auto w-full place-items-center px-0 pb-2">
                 {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
               </div>
             )}
