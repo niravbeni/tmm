@@ -191,13 +191,13 @@ export default function ResultsPage() {
     return (
       <div 
         key={index} 
-        className={isFull ? "relative w-full h-auto" : "relative p-1.5 w-full max-w-[180px] h-auto mx-auto"}
+        className={isFull ? "relative w-full h-auto" : "relative p-1 w-full max-w-[150px] h-auto mx-auto"}
         onClick={() => setCurrentCardIndex(index)}
       >
         <div className="overflow-hidden">
-          <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
-            <span className="truncate max-w-[140px]" title={playedCard.teamName}>
-              {playedCard.teamName.length > 12 ? `${playedCard.teamName.substring(0, 12)}...` : playedCard.teamName}
+          <div className={`${teamColor} ${teamTextColor} py-0.5 px-1 text-center font-medium text-xs truncate flex items-center justify-center`}>
+            <span className="truncate max-w-[120px]" title={playedCard.teamName}>
+              {playedCard.teamName.length > 10 ? `${playedCard.teamName.substring(0, 10)}...` : playedCard.teamName}
             </span>
             {isStorytellerCard && <span className="ml-1 flex-shrink-0">★</span>}
           </div>
@@ -205,8 +205,8 @@ export default function ResultsPage() {
             <Image
               src={`/cards/${playedCard.card}`}
               alt={`Card from team ${playedCard.teamName}`}
-              width={isFull ? 260 : 170}
-              height={isFull ? 380 : 247}
+              width={isFull ? 260 : 140}
+              height={isFull ? 380 : 204}
               className="w-full h-full object-cover"
               priority={isStorytellerCard}
               style={{
@@ -215,18 +215,18 @@ export default function ResultsPage() {
               }}
             />
           </div>
-          <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center text-xs`}>
+          <div className={`${teamColor} ${teamTextColor} py-0.5 px-1 text-center font-medium text-xs`}>
             {voters.length} {voters.length === 1 ? 'vote' : 'votes'}
             {isWinner && voters.length > 0 && <span className="ml-1">★</span>}
           </div>
         </div>
         
         {/* Voter color blocks below card */}
-        <div className="mt-1.5 grid grid-cols-6 gap-x-1 gap-y-1 w-full">
+        <div className="mt-1 grid grid-cols-6 gap-x-0.5 gap-y-0.5 w-full">
           {voters.map((voter, index) => (
             <div 
               key={`${voter}-${index}`} 
-              className={`h-4 w-full ${getTeamColor(voter)}`} 
+              className={`h-3 w-full ${getTeamColor(voter)}`} 
               title={voter}
             />
           ))}
@@ -457,7 +457,7 @@ export default function ResultsPage() {
                  Object.keys(gameState.votes).length >= playerTeamsCount - 1 && 
                  playerTeamsCount > 1)) && 
                gameState.playedCards && gameState.playedCards.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 gap-y-4 w-full h-full px-0">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-2 w-full h-full px-0 overflow-y-auto">
                   {gameState.playedCards.map((card, index) => renderCard(card, index))}
                 </div>
               )}
