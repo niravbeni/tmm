@@ -244,7 +244,7 @@ export default function VotePage() {
     return (
       <div 
         key={shuffledIndex} 
-        className="relative p-2 md:p-3 cursor-pointer clickable"
+        className="relative p-1 cursor-pointer clickable"
         onClick={() => {
           setSelectedCard(shuffledIndex);
           if (isOwnCard && !isStoryteller) {
@@ -266,8 +266,8 @@ export default function VotePage() {
           <Image
             src={`/cards/${playedCard.card}`}
             alt={`Card option ${shuffledIndex + 1}`}
-            width={120}
-            height={175}
+            width={100}
+            height={145}
             className="w-full h-full object-cover"
             style={{
               display: 'block',
@@ -359,8 +359,8 @@ export default function VotePage() {
           </div>
         )}
         
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {isMobile ? (
               // Mobile view - carousel with swipe
               <div className="h-full flex flex-col">
@@ -408,14 +408,14 @@ export default function VotePage() {
               </div>
             ) : (
               // Desktop grid layout
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mx-auto w-full place-items-center px-0">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-1 mx-auto w-full place-items-center px-0">
                 {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
               </div>
             )}
           </div>
           
           {/* Submit button - fixed at bottom */}
-          <div className="py-4 flex justify-center">
+          <div className="py-4 flex justify-center mt-auto">
             <button
               onClick={handleSubmitVote}
               disabled={selectedCard === null || showOwnCardWarning || gameState.currentPhase === 'lobby'}

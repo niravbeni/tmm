@@ -163,11 +163,16 @@ a[aria-label="Vercel Logo"] {
 
 /* Card styling */
 .game-card {
-  aspect-ratio: 732/1064;
-  overflow: hidden;
-  border-radius: 0;
-  transition: none;
-  border: none;
+  width: 110px;
+  height: 160px;
+  transition: all 0.2s ease-in-out;
+}
+
+@media (min-width: 1024px) {
+  .game-card {
+    width: 100px;
+    height: 145px;
+  }
 }
 
 /* Responsive card container for mobile */
