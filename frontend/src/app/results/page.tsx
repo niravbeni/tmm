@@ -150,8 +150,10 @@ export default function ResultsPage() {
       >
         <div className="overflow-hidden">
           <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
-            {playedCard.teamName}
-            {isStorytellerCard && <span className="ml-1">★</span>}
+            <span className="truncate max-w-[140px]" title={playedCard.teamName}>
+              {playedCard.teamName.length > 12 ? `${playedCard.teamName.substring(0, 12)}...` : playedCard.teamName}
+            </span>
+            {isStorytellerCard && <span className="ml-1 flex-shrink-0">★</span>}
           </div>
           <div className="aspect-[732/1064] bg-white dark:bg-black flex items-center justify-center overflow-hidden">
             <Image
@@ -208,7 +210,9 @@ export default function ResultsPage() {
             Results - Round {gameState.roundNumber}
           </div>
           <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
-            Storyteller: {gameState.storytellerTeam}
+            Storyteller: <span className="truncate inline-block max-w-[120px] align-bottom" title={gameState.storytellerTeam}>
+              {gameState.storytellerTeam.length > 12 ? `${gameState.storytellerTeam.substring(0, 12)}...` : gameState.storytellerTeam}
+            </span>
           </div>
         </div>
         
