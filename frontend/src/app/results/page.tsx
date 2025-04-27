@@ -274,7 +274,7 @@ export default function ResultsPage() {
           </div>
           {gameState.storytellerTeam && (
             <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
-              Storyteller: <span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
+              Storyteller:&nbsp;<span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
                 {gameState.storytellerTeam.length > 25 ? `${gameState.storytellerTeam.substring(0, 25)}...` : gameState.storytellerTeam}
               </span>
             </div>

@@ -247,7 +247,7 @@ export default function HandPage() {
         {gameState.storytellerTeam === teamName && (
           <div className="card p-2 md:p-3 mb-3 text-sm">
             <p>
-              <span className="font-medium">As Storyteller:</span> Select a card and provide a clue to all players
+              <span className="font-medium">As Storyteller: </span> Select a card and provide a clue to all players
             </p>
           </div>
         )}
