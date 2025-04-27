@@ -67,9 +67,18 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     socketInstance.on('gameStateUpdate', (updatedGameState: GameState) => {
       setGameState(updatedGameState);
+      
+      // Clear teamName if the user's team no longer exists in the game state
+      if (teamName && updatedGameState.teams && !updatedGameState.teams[teamName]) {
+        setTeamName('');
+      }
     });
 
     socketInstance.on('navigate', (path: string) => {
+      // If navigating to the lobby, clear the team name
+      if (path === '/') {
+        setTeamName('');
+      }
       router.push(path);
     });
 

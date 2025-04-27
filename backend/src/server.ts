@@ -240,19 +240,11 @@ io.on('connection', (socket) => {
     gameState.deck = fullDeck;
     gameState.discardPile = [];
     
-    // Reset teams and deal new hands
-    Object.keys(gameState.teams).forEach(teamName => {
-      // Deal 6 new cards to each team
-      const { cards, remainingDeck } = dealCards(gameState.deck, 6);
-      gameState.deck = remainingDeck;
-      
-      // Update team state
-      gameState.teams[teamName].score = 0;
-      gameState.teams[teamName].hand = cards;
-    });
+    // Clear all teams instead of resetting their state
+    gameState.teams = {};
     
-    // Select an initial storyteller for the first round
-    gameState.storytellerTeam = selectRandomStoryteller();
+    // Reset game state
+    gameState.storytellerTeam = '';
     gameState.storytellerCard = '';
     gameState.playedCards = [];
     gameState.votes = {};
@@ -261,8 +253,7 @@ io.on('connection', (socket) => {
     
     io.emit('gameStateUpdate', gameState);
     io.emit('navigate', '/');
-    console.log('Game reset, deck reshuffled, cards remaining:', gameState.deck.length);
-    console.log(`Initial storyteller: ${gameState.storytellerTeam}`);
+    console.log('Game reset, all teams removed, deck reshuffled, cards remaining:', gameState.deck.length);
   });
 
   socket.on('setHost', (teamName: string) => {

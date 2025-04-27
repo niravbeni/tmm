@@ -198,13 +198,13 @@ export default function HandPage() {
   );
   
   const renderSelectedCard = (card: string) => (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden w-full">
       <div className="game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
         <Image
           src={`/cards/${card}`}
           alt="Selected card"
-          width={183}
-          height={266}
+          width={240}
+          height={350}
           className="w-full h-full object-cover"
           style={{
             display: 'block',
@@ -267,8 +267,9 @@ export default function HandPage() {
                 // Mobile carousel view - with improved navigation
                 <div className="relative flex flex-col items-center h-full min-h-0">
                   {team.hand.length > 0 && (
-                    <>
-                      <div className="flex justify-between w-full mb-3">
+                    <div className="flex flex-col w-full h-full">
+                      {/* Navigation row - fixed at top */}
+                      <div className="flex justify-between w-full mb-20 relative z-10 bg-white dark:bg-black py-2">
                         <button 
                           onClick={prevCard}
                           className="w-10 h-10 flex items-center justify-center card clickable"
@@ -292,21 +293,22 @@ export default function HandPage() {
                         </button>
                       </div>
                       
+                      {/* Card display - appears below navigation */}
                       <div 
                         ref={carouselRef}
-                        className="w-full max-w-[70vw] h-[50vh] flex items-center justify-center mt-4"
+                        className="w-full h-[40vh] flex items-center justify-center px-0 mb-6 mt-6"
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
                       >
                         {renderSelectedCard(team.hand[currentCardIndex])}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               ) : (
                 // Desktop grid - more compact
-                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center">
+                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center px-0">
                   {team.hand.map((card, index) => renderHandCard(card, index))}
                 </div>
               )}

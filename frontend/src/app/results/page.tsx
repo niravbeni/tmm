@@ -146,7 +146,7 @@ export default function ResultsPage() {
     return (
       <div 
         key={index} 
-        className="relative p-1.5 w-full max-w-[180px] h-auto mx-auto"
+        className={isFull ? "relative w-full h-auto" : "relative p-1.5 w-full max-w-[180px] h-auto mx-auto"}
       >
         <div className="overflow-hidden">
           <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
@@ -159,8 +159,8 @@ export default function ResultsPage() {
             <Image
               src={`/cards/${playedCard.card}`}
               alt={`Card from team ${playedCard.teamName}`}
-              width={isFull ? 220 : 170}
-              height={isFull ? 320 : 247}
+              width={isFull ? 260 : 170}
+              height={isFull ? 380 : 247}
               className="w-full h-full object-cover"
               priority={isStorytellerCard}
               style={{
@@ -285,8 +285,9 @@ export default function ResultsPage() {
                 // Mobile carousel view
                 <div className="relative flex flex-col items-center h-full">
                   {gameState.playedCards.length > 0 && (
-                    <>
-                      <div className="flex items-center justify-between w-full mb-2">
+                    <div className="flex flex-col w-full h-full">
+                      {/* Navigation row - fixed at top */}
+                      <div className="flex items-center justify-between w-full mb-20 relative z-10 bg-white dark:bg-black py-2">
                         <button 
                           onClick={prevCard}
                           className="w-8 h-8 flex items-center justify-center card clickable"
@@ -309,15 +310,17 @@ export default function ResultsPage() {
                           </svg>
                         </button>
                       </div>
-                      <div className="flex items-center justify-center flex-1 w-full">
+                      
+                      {/* Card display - appears below navigation */}
+                      <div className="flex items-center justify-center flex-1 w-full px-0 mb-6 mt-6">
                         {renderCard(gameState.playedCards[currentCardIndex], currentCardIndex, true)}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               ) : (
                 // Desktop grid view - adjust to fit 6 cards per row
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 gap-y-4 w-full h-full">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 gap-y-4 w-full h-full px-0">
                   {gameState.playedCards.map((card, index) => renderCard(card, index))}
                 </div>
               )}
@@ -331,7 +334,7 @@ export default function ResultsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="card p-4 max-w-md mx-auto">
             <h3 className="text-lg font-bold mb-2">Reset Game?</h3>
-            <p className="mb-4 text-sm">This will reset all scores and start a new game. This action cannot be undone.</p>
+            <p className="mb-4 text-sm">This will remove all teams, reset all scores, and start a completely new game. This action cannot be undone.</p>
             <div className="flex gap-2 justify-end">
               <button 
                 onClick={() => setShowResetModal(false)}
