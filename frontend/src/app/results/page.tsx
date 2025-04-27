@@ -56,8 +56,8 @@ export default function ResultsPage() {
   
   if (isLoading || !gameState) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <h1 className="mb-8 text-4xl font-bold text-center">Loading...</h1>
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="animate-pulse text-2xl font-medium">Loading...</div>
       </div>
     );
   }
@@ -65,11 +65,11 @@ export default function ResultsPage() {
   // If team not found
   if (!gameState.teams[teamName]) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <h1 className="mb-8 text-4xl font-bold text-center">Team not found</h1>
+      <div className="flex flex-col items-center justify-center h-full p-4">
+        <h1 className="mb-6 text-2xl font-bold text-center">Team not found</h1>
         <button
           onClick={() => router.push('/')}
-          className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="modern-button clickable"
         >
           Return to Lobby
         </button>
@@ -99,52 +99,49 @@ export default function ResultsPage() {
     return (
       <div 
         key={index} 
-        className={`relative rounded-lg overflow-hidden p-1 w-full max-w-[160px] h-auto mx-auto
-          ${isWinner ? 'ring-2 ring-yellow-500' : ''} 
-          ${isStorytellerCard ? 'ring-2 ring-purple-500' : ''}
-          ${isCurrentTeamCard ? 'border-blue-500' : 'border-gray-300'}`}
+        className={`relative p-1 w-full max-w-[160px] h-auto mx-auto ${
+          isWinner ? 'selected-card' : ''
+        }`}
       >
-        <div className={`${isCurrentTeamCard ? 'bg-blue-600' : isStorytellerCard ? 'bg-purple-600' : 'bg-gray-700'} text-white py-1 px-2 text-center font-medium text-sm truncate flex items-center justify-center rounded-t-lg`}>
-          {playedCard.teamName}
-          {isStorytellerCard && <span className="ml-1">👑</span>}
-        </div>
-        <div className="aspect-[732/1064] bg-gray-200 flex items-center justify-center overflow-hidden">
-          <Image
-            src={`/cards/${playedCard.card}`}
-            alt={`Card from team ${playedCard.teamName}`}
-            width={isFull ? 160 : 140}
-            height={isFull ? 233 : 204}
-            className="w-full h-auto object-contain"
-            priority={isStorytellerCard}
-            style={{
-              display: 'block',
-              margin: 'auto',
-              maxHeight: '100%',
-              maxWidth: '100%'
-            }}
-          />
-        </div>
-        <div className="bg-black/70 text-white py-1 px-2 text-center text-sm">
-          {voters.length} {voters.length === 1 ? 'vote' : 'votes'}
-          {isWinner && voters.length > 0 && <span className="ml-1 text-yellow-400">🏆</span>}
+        <div className={`game-card bg-gray-100 dark:bg-gray-800`}>
+          <div className={`bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
+            {playedCard.teamName}
+            {isStorytellerCard && <span className="ml-1">★</span>}
+          </div>
+          <div className="aspect-[732/1064] bg-white dark:bg-black flex items-center justify-center overflow-hidden">
+            <Image
+              src={`/cards/${playedCard.card}`}
+              alt={`Card from team ${playedCard.teamName}`}
+              width={isFull ? 160 : 140}
+              height={isFull ? 233 : 204}
+              className="w-full h-full object-cover"
+              priority={isStorytellerCard}
+              style={{
+                display: 'block',
+                margin: 'auto'
+              }}
+            />
+          </div>
+          <div className="bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 py-1 px-2 text-center text-xs">
+            {voters.length} {voters.length === 1 ? 'vote' : 'votes'}
+            {isWinner && voters.length > 0 && <span className="ml-1">★</span>}
+          </div>
         </div>
         
-        {/* Voter pills below card - always present for consistency */}
-        <div className="mt-1 p-2 bg-gray-100 rounded text-center min-h-[36px] flex flex-col justify-center">
+        {/* Voter pills below card */}
+        <div className="mt-2 mb-2 flex flex-wrap justify-center gap-1 min-h-[30px]">
           {voters.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-1">
-              {voters.map(voter => (
-                <span 
-                  key={voter} 
-                  className="text-xs px-2 py-0.5 bg-blue-500 text-white rounded-full truncate max-w-full"
-                  title={voter}
-                >
-                  {voter}
-                </span>
-              ))}
-            </div>
+            voters.map(voter => (
+              <span 
+                key={voter} 
+                className="text-xs px-2 py-0.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 truncate max-w-full"
+                title={voter}
+              >
+                {voter}
+              </span>
+            ))
           ) : (
-            <p className="text-xs text-gray-400">No votes</p>
+            <span className="text-xs text-gray-400">No votes</span>
           )}
         </div>
       </div>
@@ -164,18 +161,20 @@ export default function ResultsPage() {
   const nobodyFoundStoryteller = votesForStoryteller === 0;
   
   return (
-    <main className="flex min-h-screen flex-col items-center p-2 sm:p-4 overflow-hidden">
-      <div className="w-full max-w-[1600px] flex-1 flex flex-col h-screen overflow-hidden px-2">
-        {/* More compact header especially on mobile */}
-        <div className="mb-2 flex flex-col md:flex-row md:justify-between md:items-center">
-          <h1 className="text-xl md:text-2xl font-bold">Results - Round {gameState.roundNumber}</h1>
-          <div className="text-sm md:text-base">
-            <span className="font-semibold">Storyteller:</span> {gameState.storytellerTeam}
+    <main className="flex flex-col h-full no-scroll">
+      <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
+        {/* Header */}
+        <div className="mb-2 flex items-center justify-between">
+          <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            Results - Round {gameState.roundNumber}
+          </div>
+          <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            Storyteller: {gameState.storytellerTeam}
           </div>
         </div>
         
-        {/* Scoring explanation - more compact on mobile */}
-        <div className="bg-blue-50 p-2 md:p-3 rounded-lg mb-2 md:mb-4 text-xs">
+        {/* Scoring explanation */}
+        <div className="card p-2 mb-3 text-xs">
           {everyoneFoundStoryteller && (
             <p>Everyone found the Storyteller's card! Storyteller gets 0 points, everyone else gets 2 points.</p>
           )}
@@ -188,93 +187,93 @@ export default function ResultsPage() {
           <p className="mt-1">Teams get 1 point for each vote their card received.</p>
         </div>
         
-        {/* Main content - two column layout */}
-        <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
-          {/* Scoreboard - Left side on larger screens */}
-          <div className="md:w-1/4 lg:w-1/5 flex-shrink-0 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-            <h2 className="text-sm md:text-base font-bold p-2 border-b bg-gray-50">Scoreboard</h2>
-            <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
+        {/* Main content */}
+        <div className="flex flex-col md:flex-row gap-2 h-[calc(100%-100px)]">
+          {/* Scoreboard */}
+          <div className="md:w-1/4 lg:w-1/5 flex-shrink-0 card flex flex-col h-full">
+            <h2 className="text-sm font-bold p-2 border-b">Scoreboard</h2>
+            <div className="overflow-y-auto custom-scrollbar flex-1">
               <table className="w-full border-collapse">
-                <thead className="bg-gray-100 sticky top-0">
+                <thead className="sticky top-0 bg-gray-100 dark:bg-gray-800">
                   <tr>
-                    <th className="py-1 md:py-2 px-2 md:px-3 text-left text-xs md:text-sm font-medium border-b">Rank</th>
-                    <th className="py-1 md:py-2 px-2 md:px-3 text-left text-xs md:text-sm font-medium border-b">Team</th>
-                    <th className="py-1 md:py-2 px-2 md:px-3 text-right text-xs md:text-sm font-medium border-b">Score</th>
+                    <th className="py-1 px-2 text-left text-xs font-medium border-b">Rank</th>
+                    <th className="py-1 px-2 text-left text-xs font-medium border-b">Team</th>
+                    <th className="py-1 px-2 text-right text-xs font-medium border-b">Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedTeams.map(([teamId, team], index) => (
-                    <tr key={teamId} className={`${teamId === teamName ? 'bg-blue-50' : index % 2 === 0 ? 'bg-gray-50' : ''}`}>
-                      <td className="py-1 md:py-2 px-2 md:px-3 text-xs md:text-sm">{index + 1}</td>
-                      <td className="py-1 md:py-2 px-2 md:px-3 text-xs md:text-sm font-medium">{teamId}</td>
-                      <td className="py-1 md:py-2 px-2 md:px-3 text-xs md:text-sm text-right font-bold">{team.score}</td>
+                    <tr key={teamId}>
+                      <td className="py-1 px-2 text-xs">{index + 1}</td>
+                      <td className="py-1 px-2 text-xs font-medium">{teamId}</td>
+                      <td className="py-1 px-2 text-xs text-right font-bold">{team.score}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             
-            {/* Buttons moved under scoreboard */}
-            <div className="mt-auto p-2 md:p-3 border-t flex flex-col gap-2">
+            {/* Control buttons */}
+            <div className="p-2 border-t flex flex-col gap-2 mt-auto">
               <button
                 onClick={handleNextRound}
-                className="py-1 md:py-2 px-4 bg-blue-600 text-white text-xs md:text-sm font-medium rounded-md hover:bg-blue-700 cursor-pointer w-full"
+                className="modern-button text-xs w-full clickable"
               >
                 Next Round
               </button>
               
               <button
                 onClick={() => setShowResetModal(true)}
-                className="py-1 md:py-2 px-4 bg-red-600 text-white text-xs md:text-sm font-medium rounded-md hover:bg-red-700 cursor-pointer w-full"
+                className="modern-button bg-red-800 dark:bg-red-700 text-white dark:text-white text-xs w-full clickable"
               >
-                Reset
+                Reset Game
               </button>
             </div>
           </div>
 
-          {/* Cards - Right side on larger screens */}
-          <div className="md:w-3/4 lg:w-4/5 flex-1 flex flex-col min-h-0 overflow-hidden">
-            <h2 className="text-sm md:text-base font-bold mb-2 md:mb-3 pl-1">Submitted Cards</h2>
+          {/* Cards display */}
+          <div className="md:w-3/4 lg:w-4/5 flex flex-col h-full">
+            <h2 className="text-sm font-bold mb-2 pl-1">Submitted Cards</h2>
             
-            <div className="flex-1 pt-0 pb-1 px-1">
+            <div className="h-full">
               {isMobile ? (
-                // Mobile carousel view - more compact
-                <div className="relative flex flex-col items-center">
+                // Mobile carousel view
+                <div className="relative flex flex-col items-center h-full">
                   {gameState.playedCards.length > 0 && (
                     <>
                       <div className="flex items-center justify-between w-full mb-2">
                         <button 
                           onClick={prevCard}
-                          className="bg-gray-200 hover:bg-gray-300 w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-colors cursor-pointer"
+                          className="w-8 h-8 flex items-center justify-center card clickable"
                           aria-label="Previous card"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M15 18l-6-6 6-6" />
                           </svg>
                         </button>
-                        <span className="text-sm font-medium">
+                        <span className="text-xs font-medium">
                           {currentCardIndex + 1} / {gameState.playedCards.length}
                         </span>
                         <button 
                           onClick={nextCard}
-                          className="bg-gray-200 hover:bg-gray-300 w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-colors cursor-pointer"
+                          className="w-8 h-8 flex items-center justify-center card clickable"
                           aria-label="Next card"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M9 18l6-6-6-6" />
                           </svg>
                         </button>
                       </div>
-                      <div className="w-full max-w-[160px] mx-auto">
+                      <div className="flex items-center justify-center flex-1 w-full">
                         {renderCard(gameState.playedCards[currentCardIndex], currentCardIndex, true)}
                       </div>
                     </>
                   )}
                 </div>
               ) : (
-                // Desktop responsive grid
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3 mx-auto w-full place-items-center">
-                  {gameState.playedCards.map((playedCard, index) => renderCard(playedCard, index, false))}
+                // Desktop grid view
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 gap-y-5 w-full pb-2 h-full">
+                  {gameState.playedCards.map((card, index) => renderCard(card, index))}
                 </div>
               )}
             </div>
@@ -282,24 +281,22 @@ export default function ResultsPage() {
         </div>
       </div>
       
-      {/* Reset Game Modal */}
+      {/* Reset confirmation modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h2 className="text-xl font-bold mb-3">Reset Game?</h2>
-            <p className="mb-4 text-sm">
-              This will reset all scores and start a new game. All teams will remain connected.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="card p-4 max-w-md mx-auto">
+            <h3 className="text-lg font-bold mb-2">Reset Game?</h3>
+            <p className="mb-4 text-sm">This will reset all scores and start a new game. This action cannot be undone.</p>
+            <div className="flex gap-2 justify-end">
+              <button 
                 onClick={() => setShowResetModal(false)}
-                className="py-2 px-4 text-sm border border-gray-300 rounded-md hover:bg-gray-100 cursor-pointer"
+                className="py-1 px-3 border border-gray-300 dark:border-gray-600 text-sm clickable"
               >
                 Cancel
               </button>
               <button
                 onClick={handleResetGame}
-                className="py-2 px-4 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer"
+                className="modern-button bg-red-800 dark:bg-red-700 text-white dark:text-white text-sm clickable"
               >
                 Reset Game
               </button>

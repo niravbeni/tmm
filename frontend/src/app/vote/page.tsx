@@ -74,10 +74,14 @@ export default function VotePage() {
       return;
     }
     
+    // Remove animation by immediately emitting and redirecting
     socket.emit('submitVote', {
       teamName,
       votedCardIndex: selectedCard,
     });
+    
+    // Use replace to prevent animation and history stacking
+    router.replace('/waiting');
   };
   
   const nextCard = () => {
@@ -98,8 +102,8 @@ export default function VotePage() {
   
   if (isLoading || !gameState) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 px-8">
-        <h1 className="mb-8 text-4xl font-bold text-center">Loading...</h1>
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="animate-pulse text-2xl font-medium">Loading...</div>
       </div>
     );
   }
@@ -107,11 +111,11 @@ export default function VotePage() {
   // If team not found
   if (!gameState.teams[teamName]) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 px-8">
-        <h1 className="mb-8 text-4xl font-bold text-center">Team not found</h1>
+      <div className="flex flex-col items-center justify-center h-full p-4">
+        <h1 className="mb-6 text-2xl font-bold text-center">Team not found</h1>
         <button
           onClick={() => router.push('/')}
-          className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="modern-button"
         >
           Return to Lobby
         </button>
@@ -129,18 +133,15 @@ export default function VotePage() {
     return (
       <div 
         key={index} 
-        className={`relative overflow-hidden p-1.5 md:p-1.5 cursor-pointer`}
+        className="relative p-1.5 md:p-1 cursor-pointer clickable"
         onClick={() => setSelectedCard(index)}
       >
         <div 
-          className={`aspect-[732/1064] bg-gray-200 flex items-center justify-center overflow-hidden rounded-lg transition-transform duration-200 ${
-            isSelected 
-              ? 'ring-4 ring-blue-600 z-10' 
-              : 'hover:ring-2 hover:ring-blue-300'
+          className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${
+            isSelected ? 'md:selected-card' : ''
           }`}
           style={{
-            transform: isSelected ? 'scale(1.01)' : 'scale(1)',
-            transformOrigin: 'center'
+            border: !isMobile && isSelected ? '2px solid #000000' : 'none'
           }}
         >
           <Image
@@ -148,12 +149,10 @@ export default function VotePage() {
             alt={`Card option ${index + 1}`}
             width={isMobile ? 140 : 120}
             height={isMobile ? 204 : 175}
-            className="w-full h-auto object-contain"
+            className="w-full h-full object-cover"
             style={{
               display: 'block',
-              margin: 'auto',
-              maxHeight: '100%',
-              maxWidth: '100%'
+              margin: 'auto'
             }}
           />
         </div>
@@ -162,92 +161,104 @@ export default function VotePage() {
   };
   
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-hidden">
-      <div className="w-full max-w-[1600px] flex-1 flex flex-col overflow-hidden p-4 px-8 sm:p-8 sm:px-12">
-        <div className="mb-3 md:mb-5">
-          <h1 className="text-xl md:text-2xl font-bold">Vote for a Card</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">
-            Vote for which card you think was submitted by the storyteller: <span className="font-bold">{gameState.storytellerTeam}</span>
-          </p>
+    <main className="flex flex-col h-full no-scroll">
+      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            Vote
+          </div>
+          {teamName && (
+            <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+              Team: {teamName}
+            </div>
+          )}
+          {isStoryteller && (
+            <div className="ml-auto status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+              Storyteller
+            </div>
+          )}
         </div>
         
         {hasVoted ? (
-          <div className="bg-green-50 p-3 px-6 rounded-lg mb-4 text-center">
-            <p className="text-base">
+          <div className="card p-3 mb-3 text-center">
+            <p className="text-sm md:text-base">
               Your vote has been submitted! Waiting for other teams to vote...
             </p>
           </div>
+        ) : isStoryteller ? (
+          <div className="card p-3 mb-3 text-center">
+            <p className="text-sm md:text-base">
+              As the Storyteller, you don't vote in this round. Watch as other teams try to identify your card!
+            </p>
+          </div>
         ) : (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {isMobile ? (
-              // Mobile carousel view
-              <div className="relative flex flex-col items-center h-full pb-32">
-                {gameState.playedCards.length > 0 && (
-                  <>
-                    <div className="flex items-center justify-between w-full mb-4 px-4">
-                      <button 
-                        onClick={prevCard}
-                        className="bg-gray-200 hover:bg-gray-300 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full shadow-sm transition-colors cursor-pointer"
-                        aria-label="Previous card"
+          <div className="flex-1 flex flex-col">
+            <div className="card p-2 md:p-3 mb-3 text-sm">
+              <p>
+                <span className="font-medium">Instructions:</span> Vote for the card you think was submitted by the storyteller: <span className="font-medium">{gameState.storytellerTeam}</span>
+              </p>
+            </div>
+            
+            <div className="flex-1">
+              {isMobile ? (
+                // Mobile carousel view
+                <div className="relative flex flex-col items-center h-full min-h-0">
+                  {gameState.playedCards.length > 0 && (
+                    <>
+                      <div className="flex items-center justify-between w-full mb-3">
+                        <button 
+                          onClick={prevCard}
+                          className="w-10 h-10 flex items-center justify-center card clickable"
+                          aria-label="Previous card"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M15 18l-6-6 6-6" />
+                          </svg>
+                        </button>
+                        <span className="text-sm font-medium flex items-center">
+                          {currentCardIndex + 1} / {gameState.playedCards.length}
+                        </span>
+                        <button 
+                          onClick={nextCard}
+                          className="w-10 h-10 flex items-center justify-center card clickable"
+                          aria-label="Next card"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div 
+                        ref={carouselRef}
+                        className="w-full max-w-[70vw] h-[50vh] flex items-center justify-center mt-4"
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                      </button>
-                      <span className="text-sm md:text-base font-medium">
-                        {currentCardIndex + 1} / {gameState.playedCards.length}
-                      </span>
-                      <button 
-                        onClick={nextCard}
-                        className="bg-gray-200 hover:bg-gray-300 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full shadow-sm transition-colors cursor-pointer"
-                        aria-label="Next card"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div 
-                      ref={carouselRef}
-                      className="w-full max-w-[80vw] h-[55vh] mx-auto flex items-center justify-center mb-6"
-                      onTouchStart={onTouchStart}
-                      onTouchMove={onTouchMove}
-                      onTouchEnd={onTouchEnd}
-                    >
-                      {renderCard(gameState.playedCards[currentCardIndex], currentCardIndex)}
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              // Desktop grid
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 mx-auto w-full place-items-center px-4 pb-32 md:max-h-[calc(100vh-160px)] md:overflow-y-auto">
-                {gameState.playedCards.map((card, index) => renderCard(card, index))}
-              </div>
-            )}
+                        {renderCard(gameState.playedCards[currentCardIndex], currentCardIndex)}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                // Desktop grid - more compact
+                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center">
+                  {gameState.playedCards.map((card, index) => renderCard(card, index))}
+                </div>
+              )}
+            </div>
             
             {!hasVoted && !isStoryteller && (
-              <div className="fixed bottom-12 left-0 right-0 flex justify-center w-full">
+              <div className="mt-auto py-4 flex justify-center">
                 <button
                   onClick={handleSubmitVote}
                   disabled={selectedCard === null}
-                  className={`py-2 md:py-3 px-8 md:px-10 text-sm md:text-base font-medium rounded-md transition-colors cursor-pointer shadow-md ${
-                    selectedCard === null
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  className={`modern-button ${
+                    selectedCard === null ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   Submit Vote
                 </button>
-              </div>
-            )}
-            {!hasVoted && isStoryteller && (
-              <div className="fixed bottom-12 left-0 right-0 flex justify-center w-full">
-                <div className="bg-yellow-50 p-3 rounded-md shadow-md text-center">
-                  <p className="text-sm">
-                    As the Storyteller, you don't vote in this round.
-                  </p>
-                </div>
               </div>
             )}
           </div>

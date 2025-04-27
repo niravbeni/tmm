@@ -3,26 +3,89 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --accent-light: #f0f0f0;
+  --accent-dark: #333333;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --button-bg: #222222;
+  --button-hover: #000000;
+  --button-text: #ffffff;
+  --input-border: #e0e0e0;
+  --input-focus: #000000;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --accent-light: #222222;
+    --accent-dark: #e5e5e5;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --button-bg: #ffffff;
+    --button-hover: #e0e0e0;
+    --button-text: #000000;
+    --input-border: #444444;
+    --input-focus: #ffffff;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.card {
+  background: var(--background);
+  border: 1px solid var(--accent-light);
+  box-shadow: var(--card-shadow);
+  transition: none;
+  border-radius: 0;
+}
+
+.modern-button {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0;
+  font-weight: 500;
+  transition: none;
+  cursor: pointer;
+}
+
+.modern-button:hover {
+  background: var(--button-hover);
+  transform: none;
+}
+
+.modern-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modern-input {
+  border: 1px solid var(--input-border);
+  background: var(--background);
+  color: var(--foreground);
+  padding: 0.75rem 1rem;
+  border-radius: 0;
+  transition: none;
+}
+
+.modern-input:focus {
+  border-color: var(--input-focus);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Hide Next.js logo/badge */
@@ -40,4 +103,77 @@ a[aria-label="Vercel Logo"] {
   pointer-events: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
+}
+
+/* Custom scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--accent-light);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--accent-dark);
+  border-radius: 4px;
+}
+
+/* No vertical scrolling by default */
+.no-scroll {
+  overflow: hidden;
+}
+
+/* Container for controlling height with no scrolling */
+.content-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Selected card styling */
+.selected-card {
+  border: 2px solid var(--button-bg);
+  transform: none;
+}
+
+/* Desktop-only selected card styling */
+@media (min-width: 769px) {
+  .md\:selected-card {
+    border: 2px solid #000000 !important;
+    transform: none;
+    outline: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .selected-card, .md\:selected-card {
+    border: none;
+    transform: none;
+  }
+}
+
+/* Card styling */
+.game-card {
+  aspect-ratio: 732/1064;
+  overflow: hidden;
+  border-radius: 0;
+  transition: none;
+  border: none;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+/* Status badge styling */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
 }

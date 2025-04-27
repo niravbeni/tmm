@@ -69,12 +69,14 @@ export default function HandPage() {
   const handleSubmitCard = () => {
     if (selectedCard === null || !socket) return;
     
+    // Emit without any animations or transitions
     socket.emit('submitCard', {
       teamName,
       cardIndex: selectedCard,
     });
     
-    setHasSubmitted(true);
+    // Use replace to prevent animation and history stacking
+    router.replace('/waiting');
   };
   
   const nextCard = () => {
@@ -95,8 +97,8 @@ export default function HandPage() {
   
   if (isLoading || !gameState) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 px-8">
-        <h1 className="mb-8 text-4xl font-bold text-center">Loading...</h1>
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <div className="animate-pulse text-2xl font-medium">Loading...</div>
       </div>
     );
   }
@@ -104,11 +106,11 @@ export default function HandPage() {
   // If team not found or no hand
   if (!gameState.teams[teamName] || !gameState.teams[teamName].hand) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 px-8">
-        <h1 className="mb-8 text-4xl font-bold text-center">Team not found</h1>
+      <div className="flex flex-col items-center justify-center h-full p-4">
+        <h1 className="mb-6 text-2xl font-bold text-center">Team not found</h1>
         <button
           onClick={() => router.push('/')}
-          className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="modern-button"
         >
           Return to Lobby
         </button>
@@ -122,18 +124,15 @@ export default function HandPage() {
   const renderHandCard = (card: string, index: number) => (
     <div
       key={card}
-      className="relative cursor-pointer rounded-lg overflow-hidden p-1.5 md:p-1.5"
+      className="relative cursor-pointer p-1.5 md:p-1 clickable"
       onClick={() => setSelectedCard(index)}
     >
       <div 
-        className={`aspect-[732/1064] bg-gray-200 flex items-center justify-center overflow-hidden rounded-lg transition-transform duration-200 ${
-          selectedCard === index 
-            ? 'ring-4 ring-blue-600 z-10' 
-            : 'hover:ring-2 hover:ring-blue-300'
+        className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${
+          selectedCard === index ? 'md:selected-card' : ''
         }`}
         style={{
-          transform: selectedCard === index ? 'scale(1.01)' : 'scale(1)',
-          transformOrigin: 'center'
+          border: !isMobile && selectedCard === index ? '2px solid #000000' : 'none'
         }}
       >
         <Image
@@ -141,12 +140,10 @@ export default function HandPage() {
           alt={`Card ${index + 1}`}
           width={isMobile ? 140 : 120}
           height={isMobile ? 204 : 175}
-          className="w-full h-auto object-contain"
+          className="w-full h-full object-cover"
           style={{
             display: 'block',
-            margin: 'auto',
-            maxHeight: '100%',
-            maxWidth: '100%'
+            margin: 'auto'
           }}
         />
       </div>
@@ -154,19 +151,17 @@ export default function HandPage() {
   );
   
   const renderSelectedCard = (card: string) => (
-    <div className="relative rounded-lg overflow-hidden">
-      <div className="aspect-[732/1064] bg-gray-200 flex items-center justify-center overflow-hidden">
+    <div className="relative overflow-hidden">
+      <div className="game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
         <Image
           src={`/cards/${card}`}
           alt="Selected card"
           width={183}
           height={266}
-          className="w-full h-auto object-contain"
+          className="w-full h-full object-cover"
           style={{
             display: 'block',
-            margin: 'auto',
-            maxHeight: '100%',
-            maxWidth: '100%'
+            margin: 'auto'
           }}
         />
       </div>
@@ -174,68 +169,74 @@ export default function HandPage() {
   );
   
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-hidden">
-      <div className="w-full max-w-[1600px] flex-1 flex flex-col overflow-hidden p-4 px-8 sm:p-8 sm:px-12">
-        <div className="mb-2 md:mb-5">
-          <h1 className="text-xl md:text-2xl font-bold">Your Hand</h1>
+    <main className="flex flex-col h-full no-scroll">
+      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+            Hand
+          </div>
           {teamName && (
-            <p className="text-sm md:text-base text-gray-600">
-              Team: <span className="font-bold">{teamName}</span>
-            </p>
+            <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+              Team: {teamName}
+            </div>
+          )}
+          {gameState.storytellerTeam === teamName && (
+            <div className="ml-auto status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+              Storyteller
+            </div>
           )}
         </div>
         
-        {/* Storyteller Badge - More compact on mobile */}
+        {/* Storyteller Instructions - Only shown to storytellers */}
         {gameState.storytellerTeam === teamName && (
-          <div className="bg-yellow-100 border-l-4 border-yellow-500 p-2 md:p-3 mb-2 md:mb-4 rounded-md">
-            <div className="flex items-center">
-              <span className="text-yellow-500 text-base md:text-xl mr-1 md:mr-2">🎭</span>
-              <h2 className="font-bold text-sm md:text-base">You are the Storyteller this round!</h2>
-            </div>
-            <p className="text-xs md:text-sm mt-0.5 md:mt-1">
-              Select a card and think of a clue or hint to describe it. After selecting, tell your clue to all players!
+          <div className="card p-2 md:p-3 mb-3 text-sm">
+            <p>
+              <span className="font-medium">As Storyteller:</span> Select a card and provide a clue to all players
             </p>
           </div>
         )}
         
         {hasSubmitted ? (
-          <div className="bg-green-50 p-3 px-6 rounded-lg mb-4 text-center">
-            <p className="text-base">
+          <div className="card p-3 mb-3 text-center">
+            <p className="text-sm md:text-base">
               {gameState.storytellerTeam === teamName 
-                ? "You've submitted your card and provided a clue! Waiting for other teams to submit their cards..."
-                : "You've submitted your card! Waiting for other teams to submit their cards..."}
+                ? "You've submitted your card and provided a clue. Waiting for other teams..."
+                : "You've submitted your card! Waiting for other teams..."}
             </p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
-            <p className="mb-2 md:mb-3 text-xs md:text-sm text-center">
-              {gameState.storytellerTeam === teamName 
-                ? "Select a card and give a clue about it"
-                : `Select a card that matches the clue from ${gameState.storytellerTeam}!`}
-            </p>
+            {/* Instructions are now only shown in the card for non-storytellers */}
+            {gameState.storytellerTeam !== teamName && (
+              <div className="card p-2 md:p-3 mb-3 text-sm">
+                <p>
+                  <span className="font-medium">Instructions:</span> Select a card that matches the clue from {gameState.storytellerTeam}
+                </p>
+              </div>
+            )}
             
-            <div className={`flex-1 min-h-0 overflow-y-auto pb-0 ${gameState.storytellerTeam === teamName ? 'max-h-[calc(100vh-220px)]' : ''}`}>
+            <div className="flex-1 min-h-0">
               {isMobile ? (
-                // Mobile carousel view - with clear separation between navigation and card
-                <div className="relative flex flex-col items-center h-full pb-32">
+                // Mobile carousel view - with improved navigation
+                <div className="relative flex flex-col items-center h-full min-h-0">
                   {team.hand.length > 0 && (
                     <>
-                      <div className="flex justify-between w-full px-4 z-10 bg-white pb-3">
+                      <div className="flex justify-between w-full mb-3">
                         <button 
                           onClick={prevCard}
-                          className="bg-gray-200 hover:bg-gray-300 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full shadow-sm transition-colors cursor-pointer"
+                          className="w-10 h-10 flex items-center justify-center card clickable"
                           aria-label="Previous card"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M15 18l-6-6 6-6" />
                           </svg>
                         </button>
-                        <span className="text-sm md:text-base font-medium">
+                        <span className="text-sm font-medium flex items-center">
                           {currentCardIndex + 1} / {team.hand.length}
                         </span>
                         <button 
                           onClick={nextCard}
-                          className="bg-gray-200 hover:bg-gray-300 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full shadow-sm transition-colors cursor-pointer"
+                          className="w-10 h-10 flex items-center justify-center card clickable"
                           aria-label="Next card"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -243,50 +244,42 @@ export default function HandPage() {
                           </svg>
                         </button>
                       </div>
-
-                      {/* Clear separation with invisible spacing instead of a visible border */}
-                      <div className="w-full h-4"></div>
-                      
-                      {/* Added more space */}
-                      <div className="h-6"></div>
                       
                       <div 
                         ref={carouselRef}
-                        className={`w-full max-w-[80vw] mx-auto flex items-center justify-center mb-6 pt-4 ${
-                          gameState.storytellerTeam === teamName ? 'h-[45vh] md:h-[55vh]' : 'h-[50vh]'
-                        }`}
+                        className="w-full max-w-[70vw] h-[50vh] flex items-center justify-center mt-4"
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
                       >
-                        {renderHandCard(team.hand[currentCardIndex], currentCardIndex)}
+                        {renderSelectedCard(team.hand[currentCardIndex])}
                       </div>
                     </>
                   )}
                 </div>
               ) : (
-                // Desktop responsive grid
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 mx-auto w-full place-items-center px-4 pb-32">
+                // Desktop grid - more compact
+                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center">
                   {team.hand.map((card, index) => renderHandCard(card, index))}
                 </div>
               )}
             </div>
+            
+            {!hasSubmitted && (
+              <div className="mt-auto py-4 flex justify-center">
+                <button
+                  onClick={handleSubmitCard}
+                  disabled={selectedCard === null}
+                  className={`modern-button ${
+                    selectedCard === null ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  Submit Card
+                </button>
+              </div>
+            )}
           </div>
         )}
-      </div>
-      
-      <div className="fixed bottom-12 left-0 right-0 flex justify-center w-full">
-        <button
-          onClick={handleSubmitCard}
-          disabled={selectedCard === null}
-          className={`py-2 md:py-3 px-8 md:px-10 text-sm md:text-base font-medium rounded-md transition-colors cursor-pointer shadow-md ${
-            selectedCard === null
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          Submit Card
-        </button>
       </div>
     </main>
   );
