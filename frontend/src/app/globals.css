@@ -163,15 +163,15 @@ a[aria-label="Vercel Logo"] {
 
 /* Card styling */
 .game-card {
-  width: 150px;
-  height: 220px;
+  width: 140px;
+  height: 205px;
   transition: all 0.2s ease-in-out;
 }
 
 @media (min-width: 1024px) {
   .game-card {
-    width: 160px;
-    height: 235px;
+    width: 150px;
+    height: 220px;
   }
 }
 
@@ -179,6 +179,13 @@ a[aria-label="Vercel Logo"] {
   .game-card {
     width: 180px;
     height: 265px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .game-card {
+    width: 200px;
+    height: 290px;
   }
 }
 

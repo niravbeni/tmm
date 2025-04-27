@@ -266,9 +266,10 @@ export default function VotePage() {
           <Image
             src={`/cards/${playedCard.card}`}
             alt={`Card option ${shuffledIndex + 1}`}
-            width={160}
-            height={235}
-            className="w-full h-full object-cover"
+            width={140}
+            height={205}
+            priority
+            className="h-full object-contain"
             style={{
               display: 'block',
               margin: 'auto'
@@ -360,7 +361,7 @@ export default function VotePage() {
         )}
         
         <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {isMobile ? (
               // Mobile view - carousel with swipe
               <div className="h-full flex flex-col">
@@ -408,7 +409,7 @@ export default function VotePage() {
               </div>
             ) : (
               // Desktop grid layout
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 mx-auto w-full place-items-center px-0 pb-2">
+              <div className="grid grid-cols-6 gap-1 mx-auto w-full place-items-center px-0 pb-2">
                 {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
               </div>
             )}
