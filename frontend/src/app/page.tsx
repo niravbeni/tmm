@@ -8,7 +8,6 @@ export default function LobbyPage() {
   const { socket, gameState, setTeamName, isLoading } = useSocket();
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState('');
-  const [isHost, setIsHost] = useState(false);
   const router = useRouter();
 
   const handleJoinGame = (e: React.FormEvent) => {
@@ -31,8 +30,10 @@ export default function LobbyPage() {
     }
     
     // Register the team with the server
-    socket.emit('registerTeam', inputValue, isHost);
+    socket.emit('registerTeam', inputValue, false);
     setTeamName(inputValue);
+    
+    // Redirect facilitators to results page, other players to hand page
     router.push('/hand');
   };
 
@@ -44,15 +45,9 @@ export default function LobbyPage() {
     );
   }
 
-  // Get connected teams
-  const connectedTeams = gameState?.teams ? Object.keys(gameState.teams) : [];
-  
-  // Check if there's already a facilitator/host in the game
-  const facilitatorExists = connectedTeams.some(team => gameState?.teams[team]?.isHost);
-
   return (
     <main className="flex flex-col items-center justify-center p-4 h-full">
-      <h1 className="mb-6 text-4xl font-bold tracking-tight">Say Less</h1>
+      <h1 className="mb-6 text-4xl font-bold tracking-tight">Say Less.</h1>
       
       <div className="w-full max-w-md card p-6 rounded-lg">
         <h2 className="text-2xl font-medium mb-6 text-center">Enter Team Name</h2>
@@ -73,26 +68,6 @@ export default function LobbyPage() {
             {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
           </div>
           
-          {/* Only show the facilitator checkbox if no facilitator exists yet */}
-          {!facilitatorExists && (
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input
-                  id="host"
-                  name="host"
-                  type="checkbox"
-                  checked={isHost}
-                  onChange={(e) => setIsHost(e.target.checked)}
-                  className="h-4 w-4 border-gray-300 rounded focus:ring-black"
-                />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="host" className="font-medium">I am the facilitator</label>
-                <p className="text-gray-500 text-xs">Check this only if you are the workshop facilitator and will control the game display.</p>
-              </div>
-            </div>
-          )}
-          
           <button
             type="submit"
             className="modern-button w-full clickable"
@@ -100,32 +75,6 @@ export default function LobbyPage() {
             Join Game
           </button>
         </form>
-        
-        {/* Connected Teams */}
-        {connectedTeams.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Connected Teams ({connectedTeams.length})</h3>
-            <ul className="card overflow-hidden rounded-md max-h-40 custom-scrollbar overflow-y-auto">
-              {connectedTeams.map((team) => (
-                <li 
-                  key={team} 
-                  className="py-2 px-3 border-b last:border-0 flex items-center justify-between"
-                >
-                  <div className="flex items-center">
-                    <span className="inline-block w-2 h-2 bg-black dark:bg-white rounded-full mr-2"></span>
-                    {team}
-                  </div>
-                  {gameState?.teams[team]?.isHost && (
-                    <span className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">Host</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
-              The game will begin once all teams have joined.
-            </p>
-          </div>
-        )}
       </div>
     </main>
   );

@@ -170,6 +170,36 @@ a[aria-label="Vercel Logo"] {
   border: none;
 }
 
+/* Responsive card container for mobile */
+.mobile-card-container {
+  width: 100%;
+  max-width: 85vw;
+  aspect-ratio: 732/1064;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Different max-width for larger phones */
+@media (min-width: 390px) {
+  .mobile-card-container {
+    max-width: 80vw;
+  }
+}
+
+/* Adjust for medium-sized screens */
+@media (min-width: 480px) {
+  .mobile-card-container {
+    max-width: 70vw;
+  }
+}
+
+/* Adjust for tablets */
+@media (min-width: 768px) {
+  .mobile-card-container {
+    max-width: 60vw;
+  }
+}
+
 .clickable {
   cursor: pointer;
 }

@@ -106,6 +106,12 @@ io.on('connection', (socket) => {
 
   // Submit card
   socket.on('submitCard', ({ teamName, cardIndex }) => {
+    // Prevent card submission if game hasn't been started yet
+    if (gameState.currentPhase === 'lobby') {
+      console.log(`Rejected card submission from ${teamName} - game not started yet`);
+      return;
+    }
+    
     const team = gameState.teams[teamName];
     if (!team) return;
     
@@ -134,7 +140,16 @@ io.on('connection', (socket) => {
     // Check if all teams have submitted
     if (gameState.playedCards.length === Object.keys(gameState.teams).length) {
       gameState.currentPhase = 'vote';
-      io.emit('navigate', '/vote');
+      // Ensure votes is initialized as an empty object
+      gameState.votes = {};
+      
+      // First send the updated gameState to all clients
+      io.emit('gameStateUpdate', gameState);
+      
+      // THEN emit the votePhaseStarted event
+      setTimeout(() => {
+        io.emit('votePhaseStarted');
+      }, 50);
     }
   });
 
@@ -169,21 +184,8 @@ io.on('connection', (socket) => {
       calculateScores();
       gameState.currentPhase = 'results';
       
-      // Only navigate the host to results page, send teams to waiting page
-      if (gameState.hostId) {
-        // Send host to results
-        io.to(gameState.hostId).emit('navigate', '/results');
-        
-        // Send all non-host teams to waiting
-        Object.entries(gameState.teams).forEach(([teamName, team]) => {
-          if (team.socketId !== gameState.hostId) {
-            io.to(team.socketId).emit('navigate', '/waiting');
-          }
-        });
-      } else {
-        // If no host is defined, all go to results as before
-        io.emit('navigate', '/results');
-      }
+      // Emit a resultsPhaseStarted event instead of navigate
+      io.emit('resultsPhaseStarted');
     }
     
     io.emit('gameStateUpdate', gameState);
@@ -192,13 +194,28 @@ io.on('connection', (socket) => {
 
   // Next round
   socket.on('nextRound', () => {
-    // Only the host should be able to trigger next round
-    if (gameState.hostId && socket.id !== gameState.hostId) {
-      console.log(`Non-host team tried to advance to next round: ${socket.id}`);
+    // Handle initial game start
+    if (gameState.currentPhase === 'lobby') {
+      // Set initial storyteller if not already set
+      if (!gameState.storytellerTeam && Object.keys(gameState.teams).length > 0) {
+        gameState.storytellerTeam = selectRandomStoryteller();
+        console.log(`Initial storyteller set to: ${gameState.storytellerTeam}`);
+      }
+      
+      // Start the game with hand phase
+      gameState.currentPhase = 'hand';
+      
+      // Send game state update
+      io.emit('gameStateUpdate', gameState);
+      
+      // Inform players to go to hand page, results page will stay as is
+      io.emit('nextRoundStarted');
+      
+      console.log('Game started, initial phase: hand');
       return;
     }
     
-    // Reset for next round
+    // Regular next round functionality
     gameState.playedCards = [];
     gameState.votes = {};
     gameState.currentPhase = 'hand';
@@ -229,7 +246,11 @@ io.on('connection', (socket) => {
     });
     
     io.emit('gameStateUpdate', gameState);
-    io.emit('navigate', '/hand');
+    
+    // Send a nextRound notification instead of forcing navigation
+    // This allows clients to decide whether to navigate or stay on results
+    io.emit('nextRoundStarted');
+    
     console.log('Next round started, cards remaining:', gameState.deck.length);
   });
 
@@ -251,8 +272,8 @@ io.on('connection', (socket) => {
     gameState.currentPhase = 'lobby';
     gameState.roundNumber = 1;
     
+    // Update game state but don't force navigation
     io.emit('gameStateUpdate', gameState);
-    io.emit('navigate', '/');
     console.log('Game reset, all teams removed, deck reshuffled, cards remaining:', gameState.deck.length);
   });
 

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useSocket } from '@/context/SocketContext';
+import { PlayedCard } from '@/context/SocketContext';
 
 // Team colors array (12 distinct pastel colors)
 const TEAM_COLORS = [
@@ -45,10 +46,6 @@ export default function ResultsPage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to lobby if no team name
-    if (!teamName && !isLoading) {
-      router.push('/');
-    }
     
     // Check if device is mobile
     const checkMobile = () => {
@@ -61,9 +58,13 @@ export default function ResultsPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [teamName, isLoading, router]);
 
+  // No redirection logic - results page should always be accessible
+  // Even if no team is selected or user navigates here manually
+
   const handleNextRound = () => {
     if (!socket) return;
     socket.emit('nextRound');
+    // Don't redirect away from results page
   };
 
   const handleResetGame = () => {
@@ -88,57 +89,101 @@ export default function ResultsPage() {
   
   if (isLoading || !gameState) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="animate-pulse text-2xl font-medium">Loading...</div>
-      </div>
+      <main className="flex flex-col h-full no-scroll results-page">
+        <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
+          {/* Header */}
+          <div className="mb-2 flex items-center justify-between">
+            <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+              Results - No Active Game
+            </div>
+          </div>
+          
+          {/* Main content */}
+          <div className="flex flex-col md:flex-row gap-3 h-[calc(100%-100px)]">
+            {/* Empty Scoreboard */}
+            <div className="md:w-1/4 lg:w-1/5 flex-shrink-0 card flex flex-col h-full">
+              <h2 className="text-sm font-bold p-2 border-b">Scoreboard</h2>
+              <div className="overflow-y-auto custom-scrollbar flex-1">
+                <p className="text-sm p-3 text-gray-500">No teams have joined yet</p>
+              </div>
+              
+              {/* Control buttons */}
+              <div className="p-2 border-t flex flex-col gap-2 mt-auto">
+                <button
+                  disabled={!socket}
+                  className="modern-button text-xs w-full clickable"
+                  onClick={handleNextRound}
+                >
+                  {!gameState || gameState.currentPhase === 'lobby' ? 'Start Game' : 'Next Round'}
+                </button>
+                
+                <button
+                  disabled={!socket}
+                  className="modern-button bg-red-800 dark:bg-red-700 text-white dark:text-white text-xs w-full clickable"
+                  onClick={() => setShowResetModal(true)}
+                >
+                  Reset Game
+                </button>
+              </div>
+            </div>
+
+            {/* Empty Cards display */}
+            <div className="md:w-3/4 lg:w-4/5 flex flex-col h-full">
+              <h2 className="text-sm font-bold mb-2 pl-1">Submitted Cards</h2>
+              
+              <div className="h-full">
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-gray-900 p-8 rounded-lg text-center">
+                  <h3 className="text-xl font-bold mb-2">Waiting for Teams to Join</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Teams need to join the game from the lobby page before the game can begin.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     );
   }
 
-  // If team not found
-  if (!gameState.teams[teamName]) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <h1 className="mb-6 text-2xl font-bold text-center">Team not found</h1>
-        <button
-          onClick={() => router.push('/')}
-          className="modern-button clickable"
-        >
-          Return to Lobby
-        </button>
-      </div>
-    );
-  }
+  // Handle the case where a user is viewing the results page without selecting a team
+  const viewOnlyMode = !teamName || !gameState.teams[teamName];
 
   // Sort teams by score (highest first)
-  const sortedTeams = Object.entries(gameState.teams)
+  const sortedTeams = Object.entries(gameState.teams || {})
     .sort(([, teamA], [, teamB]) => teamB.score - teamA.score);
+
+  // Count of all player teams
+  const playerTeamsCount = Object.keys(gameState?.teams || {}).length;
   
   // Get list of voters for each card
   const getVotersForCard = (cardIndex: number) => {
-    return Object.entries(gameState.votes)
+    return Object.entries(gameState.votes || {})
       .filter(([_, votedIndex]) => votedIndex === cardIndex)
       .map(([voterTeam]) => voterTeam);
   };
 
-  // Get team color based on team index
+  // Get team color based on team index - only count player teams for coloring
   const getTeamColor = (teamId: string): string => {
-    const teamIndex = Object.keys(gameState.teams).indexOf(teamId);
+    const playerTeams = Object.keys(gameState?.teams || {}).filter(id => true);
+    const teamIndex = playerTeams.indexOf(teamId);
     return teamIndex >= 0 ? TEAM_COLORS[teamIndex % TEAM_COLORS.length] : 'bg-gray-200';
   };
 
-  // Get team text color based on team index
+  // Get team text color based on team index - only count player teams for coloring
   const getTeamTextColor = (teamId: string): string => {
-    const teamIndex = Object.keys(gameState.teams).indexOf(teamId);
+    const playerTeams = Object.keys(gameState?.teams || {}).filter(id => true);
+    const teamIndex = playerTeams.indexOf(teamId);
     return teamIndex >= 0 ? TEAM_TEXT_COLORS[teamIndex % TEAM_TEXT_COLORS.length] : 'text-gray-800';
   };
 
-  // Render a card with its voters
+  // Render a card in the results view
   const renderCard = (playedCard: any, index: number, isFull = false) => {
     const voters = getVotersForCard(index);
     const isCurrentTeamCard = playedCard.teamName === teamName;
     const isStorytellerCard = playedCard.teamName === gameState.storytellerTeam;
     const isWinner = voters.length > 0 && 
-      getVotersForCard(index).length === Math.max(...gameState.playedCards.map((_, i) => getVotersForCard(i).length));
+      getVotersForCard(index).length === Math.max(...(gameState.playedCards || []).map((_, i) => getVotersForCard(i).length));
     
     const teamColor = getTeamColor(playedCard.teamName);
     const teamTextColor = getTeamTextColor(playedCard.teamName);
@@ -147,6 +192,7 @@ export default function ResultsPage() {
       <div 
         key={index} 
         className={isFull ? "relative w-full h-auto" : "relative p-1.5 w-full max-w-[180px] h-auto mx-auto"}
+        onClick={() => setCurrentCardIndex(index)}
       >
         <div className="overflow-hidden">
           <div className={`${teamColor} ${teamTextColor} py-1 px-2 text-center font-medium text-xs truncate flex items-center justify-center`}>
@@ -190,16 +236,33 @@ export default function ResultsPage() {
   };
   
   // Calculate how many teams guessed the storyteller's card
-  const storytellerCardIndex = gameState.playedCards.findIndex(card => 
+  const storytellerCardIndex = gameState.playedCards ? gameState.playedCards.findIndex(card => 
     card.teamName === gameState.storytellerTeam
-  );
+  ) : -1;
   
   const votesForStoryteller = storytellerCardIndex !== -1 ? 
     getVotersForCard(storytellerCardIndex).length : 0;
   
-  const totalTeams = Object.keys(gameState.teams).length;
+  const totalTeams = Object.keys(gameState?.teams || {}).length;
   const everyoneFoundStoryteller = votesForStoryteller === totalTeams - 1;
   const nobodyFoundStoryteller = votesForStoryteller === 0;
+  
+  // Show desktop-only message for mobile users
+  if (isMobile) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-4">
+          <rect x="4" y="3" width="16" height="16" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="19" x2="12" y2="21" />
+        </svg>
+        <h1 className="text-2xl font-bold mb-4 text-center">Desktop Only</h1>
+        <p className="text-center mb-6">
+          The results page is designed for desktop viewing only. Please use a larger screen to view game results.
+        </p>
+      </div>
+    );
+  }
   
   return (
     <main className="flex flex-col h-full no-scroll results-page">
@@ -207,13 +270,15 @@ export default function ResultsPage() {
         {/* Header */}
         <div className="mb-2 flex items-center justify-between">
           <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-            Results - Round {gameState.roundNumber}
+            Results - Round {gameState.roundNumber || 'N/A'}
           </div>
-          <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
-            Storyteller: <span className="truncate inline-block max-w-[120px] align-bottom" title={gameState.storytellerTeam}>
-              {gameState.storytellerTeam.length > 12 ? `${gameState.storytellerTeam.substring(0, 12)}...` : gameState.storytellerTeam}
-            </span>
-          </div>
+          {gameState.storytellerTeam && (
+            <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
+              Storyteller: <span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
+                {gameState.storytellerTeam.length > 25 ? `${gameState.storytellerTeam.substring(0, 25)}...` : gameState.storytellerTeam}
+              </span>
+            </div>
+          )}
         </div>
         
         {/* Scoring explanation */}
@@ -235,23 +300,23 @@ export default function ResultsPage() {
           {/* Scoreboard */}
           <div className="md:w-1/4 lg:w-1/5 flex-shrink-0 card flex flex-col h-full">
             <h2 className="text-sm font-bold p-2 border-b">Scoreboard</h2>
-            <div className="overflow-y-auto custom-scrollbar flex-1">
-              <table className="w-full border-collapse">
+            <div className="overflow-y-auto overflow-x-hidden custom-scrollbar flex-1">
+              <table className="w-full table-fixed border-collapse">
                 <thead className="sticky top-0 bg-gray-100 dark:bg-gray-800">
                   <tr>
-                    <th className="py-1 px-2 text-left text-xs font-medium border-b">Rank</th>
-                    <th className="py-1 px-2 text-left text-xs font-medium border-b">Team</th>
-                    <th className="py-1 px-2 text-right text-xs font-medium border-b">Score</th>
+                    <th className="py-1 px-2 text-left text-xs font-medium border-b w-[15%]">Rank</th>
+                    <th className="py-1 px-2 text-left text-xs font-medium border-b w-[65%]">Team</th>
+                    <th className="py-1 px-2 text-right text-xs font-medium border-b w-[20%]">Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedTeams.map(([teamId, team], index) => (
                     <tr key={teamId} className={`${getTeamColor(teamId)}`}>
-                      <td className={`py-1 px-2 text-xs ${getTeamTextColor(teamId)}`}>{index + 1}</td>
-                      <td className={`py-1 px-2 text-xs font-medium ${getTeamTextColor(teamId)}`}>
+                      <td className={`py-2 px-2 text-xs align-top ${getTeamTextColor(teamId)}`}>{index + 1}</td>
+                      <td className={`py-2 px-2 text-xs font-medium break-words line-clamp-2 ${getTeamTextColor(teamId)}`} title={teamId}>
                         {teamId}
                       </td>
-                      <td className={`py-1 px-2 text-xs text-right font-bold ${getTeamTextColor(teamId)}`}>{team.score}</td>
+                      <td className={`py-2 px-2 text-xs text-right font-bold align-top ${getTeamTextColor(teamId)}`}>{team.score}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -261,15 +326,17 @@ export default function ResultsPage() {
             {/* Control buttons */}
             <div className="p-2 border-t flex flex-col gap-2 mt-auto">
               <button
-                onClick={handleNextRound}
+                disabled={!socket}
                 className="modern-button text-xs w-full clickable"
+                onClick={handleNextRound}
               >
-                Next Round
+                {!gameState || gameState.currentPhase === 'lobby' ? 'Start Game' : 'Next Round'}
               </button>
               
               <button
-                onClick={() => setShowResetModal(true)}
+                disabled={!socket}
                 className="modern-button bg-red-800 dark:bg-red-700 text-white dark:text-white text-xs w-full clickable"
+                onClick={() => setShowResetModal(true)}
               >
                 Reset Game
               </button>
@@ -281,45 +348,115 @@ export default function ResultsPage() {
             <h2 className="text-sm font-bold mb-2 pl-1">Submitted Cards</h2>
             
             <div className="h-full">
-              {isMobile ? (
-                // Mobile carousel view
-                <div className="relative flex flex-col items-center h-full">
-                  {gameState.playedCards.length > 0 && (
-                    <div className="flex flex-col w-full h-full">
-                      {/* Navigation row - fixed at top */}
-                      <div className="flex items-center justify-between w-full mb-20 relative z-10 bg-white dark:bg-black py-2">
-                        <button 
-                          onClick={prevCard}
-                          className="w-8 h-8 flex items-center justify-center card clickable"
-                          aria-label="Previous card"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M15 18l-6-6 6-6" />
-                          </svg>
-                        </button>
-                        <span className="text-xs font-medium">
-                          {currentCardIndex + 1} / {gameState.playedCards.length}
-                        </span>
-                        <button 
-                          onClick={nextCard}
-                          className="w-8 h-8 flex items-center justify-center card clickable"
-                          aria-label="Next card"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </button>
-                      </div>
-                      
-                      {/* Card display - appears below navigation */}
-                      <div className="flex items-center justify-center flex-1 w-full px-0 mb-6 mt-6">
-                        {renderCard(gameState.playedCards[currentCardIndex], currentCardIndex, true)}
-                      </div>
-                    </div>
-                  )}
+              {/* Show lobby state when in lobby phase */}
+              {gameState.currentPhase === 'lobby' && (
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-gray-900 p-8 rounded-lg text-center">
+                  <h3 className="text-xl font-bold mb-2">Waiting for Teams to Join</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Teams need to join the game from the lobby page before the game can begin.
+                  </p>
                 </div>
-              ) : (
-                // Desktop grid view - adjust to fit 6 cards per row
+              )}
+              
+              {/* Show waiting state when no cards are submitted yet */}
+              {gameState.currentPhase !== 'lobby' && (!gameState.playedCards || gameState.playedCards.length === 0 || gameState.playedCards.length < playerTeamsCount) && gameState.currentPhase !== 'results' && (
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-gray-900 p-8 rounded-lg text-center">
+                  <div className="w-20 h-20 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin mb-6"></div>
+                  <h3 className="text-xl font-bold mb-2">Waiting for Teams to Submit Cards</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">Teams are selecting their cards that match the storyteller's clue.</p>
+                  <div className="flex flex-col gap-2 max-w-md w-full mx-auto">
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
+                      Submitted: {gameState.playedCards ? gameState.playedCards.length : 0} / {playerTeamsCount}
+                    </p>
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-green-500"
+                        style={{ 
+                          width: `${gameState.playedCards ? 
+                            Math.round((gameState.playedCards.length / playerTeamsCount) * 100) : 0}%` 
+                        }}
+                      ></div>
+                    </div>
+                    {gameState.playedCards && gameState.playedCards.length > 0 && (
+                      <div className="mt-2 flex flex-wrap justify-center gap-2">
+                        {Object.keys(gameState.teams).map(team => (
+                          <div 
+                            key={team} 
+                            className={`px-2 py-1 text-xs ${
+                              gameState.playedCards.some(card => card.teamName === team) 
+                                ? `${getTeamColor(team)} ${getTeamTextColor(team)}` 
+                                : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                            }`}
+                          >
+                            {gameState.playedCards.some(card => card.teamName === team) 
+                              ? `${team} ✓` 
+                              : team
+                            }
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Show waiting state when cards are submitted but voting is in progress */}
+              {gameState.currentPhase === 'vote' &&
+                gameState.playedCards && 
+                gameState.playedCards.length >= playerTeamsCount &&
+                playerTeamsCount > 1 &&
+                (!gameState.votes || Object.keys(gameState.votes).length < playerTeamsCount - 1) && (
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-gray-900 p-8 rounded-lg text-center">
+                  <div className="w-20 h-20 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin mb-6"></div>
+                  <h3 className="text-xl font-bold mb-2">Waiting for Teams to Vote</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Teams are voting for which card they think belongs to <span className={`${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)} px-1.5 py-0.5`}>{gameState.storytellerTeam}</span>
+                  </p>
+                  <div className="flex flex-col gap-2 max-w-md w-full mx-auto">
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
+                      Voted: {gameState.votes ? Object.keys(gameState.votes).length : 0} / {playerTeamsCount - 1}
+                    </p>
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-green-500"
+                        style={{ 
+                          width: `${Math.round(((gameState.votes ? Object.keys(gameState.votes).length : 0) / 
+                            (playerTeamsCount - 1)) * 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap justify-center gap-2">
+                      {Object.keys(gameState.teams)
+                        .filter(team => team !== gameState.storytellerTeam) // Skip storyteller
+                        .map(team => (
+                          <div 
+                            key={team} 
+                            className={`px-2 py-1 text-xs ${
+                              gameState.votes && Object.prototype.hasOwnProperty.call(gameState.votes, team)
+                                ? `${getTeamColor(team)} ${getTeamTextColor(team)}` 
+                                : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                            }`}
+                          >
+                            {gameState.votes && Object.prototype.hasOwnProperty.call(gameState.votes, team)
+                              ? `${team} ✓` 
+                              : team
+                            }
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Show results when all voting is complete or when there's only one player team (no voting needed) */}
+              {((gameState.currentPhase === 'results') || 
+                (playerTeamsCount <= 1 && gameState.playedCards?.length >= playerTeamsCount) ||
+                (gameState.currentPhase === 'vote' && 
+                 gameState.votes && 
+                 Object.keys(gameState.votes).length >= playerTeamsCount - 1 && 
+                 playerTeamsCount > 1)) && 
+               gameState.playedCards && gameState.playedCards.length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 gap-y-4 w-full h-full px-0">
                   {gameState.playedCards.map((card, index) => renderCard(card, index))}
                 </div>
