@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, TouchEvent } from 'react';
+import { useState, useEffect, useRef, TouchEvent, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useSocket } from '@/context/SocketContext';
@@ -44,6 +44,7 @@ export default function VotePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [showOwnCardWarning, setShowOwnCardWarning] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   
@@ -90,26 +91,48 @@ export default function VotePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [teamName, isLoading, router]);
 
+  // Shuffle the cards while keeping track of their original indices
+  const shuffledCards = useMemo(() => {
+    if (!gameState?.playedCards) return [];
+    
+    // Create an array of objects with the card data and its original index
+    const indexedCards = gameState.playedCards.map((card, index) => ({
+      card,
+      originalIndex: index
+    }));
+    
+    // Fisher-Yates shuffle algorithm
+    for (let i = indexedCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indexedCards[i], indexedCards[j]] = [indexedCards[j], indexedCards[i]];
+    }
+    
+    return indexedCards;
+  }, [gameState?.playedCards]);
+
   const handleSubmitVote = () => {
     if (selectedCard === null || !socket || !gameState) return;
     
     // Don't allow voting if you're the storyteller
     if (isStoryteller) {
-      alert("As the Storyteller, you don't need to vote!");
-      return;
+      return; // This is already handled in the UI
     }
     
     // Don't allow voting for your own card if you're not the storyteller
-    const isOwnCard = gameState.playedCards[selectedCard]?.teamName === teamName;
+    const originalIndex = shuffledCards[selectedCard]?.originalIndex;
+    const isOwnCard = gameState.playedCards[originalIndex]?.teamName === teamName;
+    
     if (isOwnCard) {
-      alert("You can't vote for your own card!");
+      setShowOwnCardWarning(true);
       return;
     }
     
-    // Remove animation by immediately emitting and redirecting
+    setShowOwnCardWarning(false);
+    
+    // Submit vote with the original index, not the shuffled index
     socket.emit('submitVote', {
       teamName,
-      votedCardIndex: selectedCard,
+      votedCardIndex: originalIndex,
     });
     
     // Use replace to prevent animation and history stacking
@@ -117,19 +140,21 @@ export default function VotePage() {
   };
   
   const nextCard = () => {
-    if (!gameState?.playedCards) return;
+    if (!shuffledCards.length) return;
     setCurrentCardIndex((prev) => 
-      prev === gameState.playedCards.length - 1 ? 0 : prev + 1
+      prev === shuffledCards.length - 1 ? 0 : prev + 1
     );
-    setSelectedCard(currentCardIndex + 1 === gameState.playedCards.length ? 0 : currentCardIndex + 1);
+    setSelectedCard(currentCardIndex + 1 === shuffledCards.length ? 0 : currentCardIndex + 1);
+    setShowOwnCardWarning(false); // Clear warning when changing cards
   };
   
   const prevCard = () => {
-    if (!gameState?.playedCards) return;
+    if (!shuffledCards.length) return;
     setCurrentCardIndex((prev) => 
-      prev === 0 ? gameState.playedCards.length - 1 : prev - 1
+      prev === 0 ? shuffledCards.length - 1 : prev - 1
     );
-    setSelectedCard(currentCardIndex === 0 ? gameState.playedCards.length - 1 : currentCardIndex - 1);
+    setSelectedCard(currentCardIndex === 0 ? shuffledCards.length - 1 : currentCardIndex - 1);
+    setShowOwnCardWarning(false); // Clear warning when changing cards
   };
   
   if (isLoading || !gameState) {
@@ -172,15 +197,25 @@ export default function VotePage() {
     return teamIndex >= 0 ? TEAM_TEXT_COLORS[teamIndex % TEAM_TEXT_COLORS.length] : 'text-gray-800';
   };
   
-  // Render a card
-  const renderCard = (playedCard: any, index: number) => {
-    const isSelected = selectedCard === index;
+  // Render a card from the shuffled array
+  const renderCard = (cardItem: any, shuffledIndex: number) => {
+    const isSelected = selectedCard === shuffledIndex;
+    const playedCard = cardItem.card;
+    const isOwnCard = playedCard.teamName === teamName;
     
     return (
       <div 
-        key={index} 
+        key={shuffledIndex} 
         className="relative p-2 md:p-3 cursor-pointer clickable"
-        onClick={() => setSelectedCard(index)}
+        onClick={() => {
+          setSelectedCard(shuffledIndex);
+          // Show warning if it's the user's own card
+          if (isOwnCard && !isStoryteller) {
+            setShowOwnCardWarning(true);
+          } else {
+            setShowOwnCardWarning(false);
+          }
+        }}
       >
         <div 
           className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden ${
@@ -193,7 +228,7 @@ export default function VotePage() {
         >
           <Image
             src={`/cards/${playedCard.card}`}
-            alt={`Card option ${index + 1}`}
+            alt={`Card option ${shuffledIndex + 1}`}
             width={isMobile ? 140 : 120}
             height={isMobile ? 204 : 175}
             className="w-full h-full object-cover"
@@ -244,13 +279,20 @@ export default function VotePage() {
               <p>
                 <span className="font-medium">Instructions:</span> Vote for the card you think was submitted by the storyteller: <span className={`font-medium ${getTeamTextColor(gameState.storytellerTeam)}`}>{gameState.storytellerTeam}</span>
               </p>
+              
+              {/* Warning message for own card selection */}
+              {showOwnCardWarning && (
+                <div className="mt-2 p-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-sm">
+                  <p className="text-xs">You can't vote for your own card! Please select a different card.</p>
+                </div>
+              )}
             </div>
             
             <div className="flex-1">
               {isMobile ? (
                 // Mobile carousel view
                 <div className="relative flex flex-col items-center h-full min-h-0">
-                  {gameState.playedCards.length > 0 && (
+                  {shuffledCards.length > 0 && (
                     <>
                       <div className="flex items-center justify-between w-full mb-3">
                         <button 
@@ -263,7 +305,7 @@ export default function VotePage() {
                           </svg>
                         </button>
                         <span className="text-sm font-medium flex items-center">
-                          {currentCardIndex + 1} / {gameState.playedCards.length}
+                          {currentCardIndex + 1} / {shuffledCards.length}
                         </span>
                         <button 
                           onClick={nextCard}
@@ -282,7 +324,7 @@ export default function VotePage() {
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
                       >
-                        {renderCard(gameState.playedCards[currentCardIndex], currentCardIndex)}
+                        {renderCard(shuffledCards[currentCardIndex], currentCardIndex)}
                       </div>
                     </>
                   )}
@@ -290,7 +332,7 @@ export default function VotePage() {
               ) : (
                 // Desktop grid - more compact
                 <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center">
-                  {gameState.playedCards.map((card, index) => renderCard(card, index))}
+                  {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
                 </div>
               )}
             </div>
@@ -299,9 +341,9 @@ export default function VotePage() {
               <div className="mt-auto py-4 flex justify-center">
                 <button
                   onClick={handleSubmitVote}
-                  disabled={selectedCard === null}
+                  disabled={selectedCard === null || showOwnCardWarning}
                   className={`modern-button ${
-                    selectedCard === null ? 'opacity-50 cursor-not-allowed' : ''
+                    (selectedCard === null || showOwnCardWarning) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   Submit Vote
