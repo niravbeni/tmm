@@ -298,16 +298,27 @@ export default function ResultsPage() {
           
           {/* Scoring explanation */}
           <div className="card p-2 mb-3 text-xs">
-            {everyoneFoundStoryteller && (
-              <p>Everyone found the Storyteller's card! Storyteller gets 0 points, everyone else gets 2 points.</p>
+            {gameState.currentPhase === 'lobby' ? (
+              <div className="space-y-1">
+                <p className="font-medium mb-1">Game Rules:</p>
+                <p>1. The Storyteller gives a clue about their chosen card.</p>
+                <p>2. Other players select a card from their hand that matches the clue.</p>
+                <p>3. All players vote on which card they think belongs to the Storyteller.</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {everyoneFoundStoryteller && (
+                  <p>Everyone found the Storyteller's card! Storyteller gets 0 points, everyone else gets 2 points.</p>
+                )}
+                {nobodyFoundStoryteller && (
+                  <p>Nobody found the Storyteller's card! Storyteller gets 0 points, everyone else gets 2 points.</p>
+                )}
+                {!everyoneFoundStoryteller && !nobodyFoundStoryteller && (
+                  <p>Some players found the Storyteller's card. Storyteller gets 3 points, correct guessers get 3 points.</p>
+                )}
+                <p>Teams get 1 point for each vote their card received.</p>
+              </div>
             )}
-            {nobodyFoundStoryteller && (
-              <p>Nobody found the Storyteller's card! Storyteller gets 0 points, everyone else gets 2 points.</p>
-            )}
-            {!everyoneFoundStoryteller && !nobodyFoundStoryteller && (
-              <p>Some players found the Storyteller's card. Storyteller gets 3 points, correct guessers get 3 points.</p>
-            )}
-            <p className="mt-1">Teams get 1 point for each vote their card received.</p>
           </div>
           
           {/* Main content */}
