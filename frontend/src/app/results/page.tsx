@@ -308,7 +308,7 @@ export default function ResultsPage() {
           
           {/* Scoring explanation */}
           <div className="card p-2 mb-3 text-xs">
-            {gameState.currentPhase === 'lobby' ? (
+            {gameState.currentPhase === 'lobby' || !gameState.storytellerTeam ? (
               <div className="space-y-1">
                 <p className="font-medium mb-1">Game Rules:</p>
                 <p>1. The Storyteller gives a clue about their chosen card.</p>
