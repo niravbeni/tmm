@@ -34,17 +34,17 @@ export default function RulesPage() {
             <h1 className="text-xl font-bold text-center mb-2">Say Less.</h1>
             <p className="text-base italic text-center mb-6">(A Game of Precision, Vagueness, and Communication)</p>
             
-            <div className="flex flex-row gap-8">
+            <div className="flex flex-row gap-8 mb-2">
               {/* Left Column */}
-              <div className="w-1/2 space-y-6">
+              <div className="w-1/2 space-y-5">
                 <section>
-                  <h2 className="text-lg font-bold mb-3">Goal</h2>
+                  <h2 className="text-lg font-bold mb-2">Goal</h2>
                   <p className="text-base">Earn the highest score by mastering the balance between being precise and being vague.</p>
                 </section>
                 
                 <section>
-                  <h2 className="text-lg font-bold mb-3">Getting Started</h2>
-                  <ul className="list-disc pl-5 text-base space-y-2">
+                  <h2 className="text-lg font-bold mb-2">Getting Started</h2>
+                  <ul className="list-disc pl-5 text-base space-y-1">
                     <li>Form teams of 2-3 people each (ideally 6-12 teams total).</li>
                     <li>Open <a href="https://say-less.onrender.com" className="text-blue-600 underline">say-less.onrender.com</a> on your device.</li>
                     <li>Enter your team name and join the game.</li>
@@ -53,12 +53,12 @@ export default function RulesPage() {
                 </section>
                         
                 <section>
-                  <h2 className="text-lg font-bold mb-3">How to Play</h2>
-                  <p className="text-base mb-3">Each round, one team is designated as the Storyteller.</p>
+                  <h2 className="text-lg font-bold mb-2">How to Play</h2>
+                  <p className="text-base mb-2">Each round, one team is designated as the Storyteller.</p>
                             
-                  <div className="pl-3 mb-4">
-                    <h3 className="text-base font-bold mb-2">The Storyteller Team:</h3>
-                    <ul className="list-disc pl-5 text-base space-y-2">
+                  <div className="pl-3 mb-3">
+                    <h3 className="text-base font-bold mb-1">The Storyteller Team:</h3>
+                    <ul className="list-disc pl-5 text-base space-y-1">
                       <li>Receives 6 cards to choose from.</li>
                       <li>Discusses and selects one card to play.</li>
                       <li>Creates a clue to describe their chosen card.</li>
@@ -68,8 +68,8 @@ export default function RulesPage() {
                   </div>
                             
                   <div className="pl-3">
-                    <h3 className="text-base font-bold mb-2">All Other Teams:</h3>
-                    <ul className="list-disc pl-5 text-base space-y-2">
+                    <h3 className="text-base font-bold mb-1">All Other Teams:</h3>
+                    <ul className="list-disc pl-5 text-base space-y-1">
                       <li>Discuss and submit a card from their hand that best matches the clue.</li>
                       <li>Once all cards are submitted, teams vote on which card they believe belongs to the Storyteller.</li>
                       <li>Teams cannot vote for their own card.</li>
@@ -79,11 +79,11 @@ export default function RulesPage() {
               </div>
               
               {/* Right Column */}
-              <div className="w-1/2 space-y-6">
+              <div className="w-1/2 space-y-5">
                 <section>
-                  <h2 className="text-lg font-bold mb-3">Scoring</h2>
+                  <h2 className="text-lg font-bold mb-2">Scoring</h2>
                   
-                  <table className="w-auto text-sm border-collapse mb-4">
+                  <table className="w-auto text-sm border-collapse mb-3">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
                         <th className="border border-gray-300 dark:border-gray-700 px-3 py-1">Team</th>
@@ -122,9 +122,9 @@ export default function RulesPage() {
                   </table>
                 </section>
                         
-                <section className="mt-6">
-                  <h2 className="text-lg font-bold mb-3">Strategy Tips</h2>
-                  <ul className="list-disc pl-5 text-base space-y-2">
+                <section>
+                  <h2 className="text-lg font-bold mb-2">Strategy Tips</h2>
+                  <ul className="list-disc pl-5 text-base space-y-1">
                     <li>Be creative with your clues - think outside the box!</li>
                     <li>When you're the Storyteller, aim for a clue that some but not all teams will understand.</li>
                     <li>When guessing, pick cards that could plausibly match the clue but also might attract votes.</li>
