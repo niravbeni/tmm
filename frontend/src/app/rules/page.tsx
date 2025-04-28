@@ -32,18 +32,18 @@ export default function RulesPage() {
 
           <div className="card p-8 mb-3">
             <h1 className="text-3xl font-bold text-center mb-1">Say Less.</h1>
-            <p className="text-base italic text-center mb-6">(A Game of Precision, Vagueness, and Communication)</p>
+            <p className="text-base italic text-center mb-4">(A Game of Precision, Vagueness, and Communication)</p>
             
             <div className="flex flex-row gap-8 mb-2">
               {/* Left Column */}
-              <div className="w-1/2 space-y-6">
+              <div className="w-1/2 space-y-13">
                 <section>
-                  <h2 className="text-lg font-bold mb-2">Goal</h2>
+                  <h2 className="text-2xl font-bold mb-2">Goal</h2>
                   <p className="text-base">Earn the highest score by mastering the balance between being precise and being vague.</p>
                 </section>
                 
                 <section>
-                  <h2 className="text-lg font-bold mb-2">Getting Started</h2>
+                  <h2 className="text-2xl font-bold mb-2">Getting Started</h2>
                   <ul className="list-disc pl-5 text-base space-y-1">
                     <li>Form teams of 2-3 people each (ideally 6-12 teams total).</li>
                     <li>Open <a href="https://say-less.onrender.com" className="text-blue-600 underline">say-less.onrender.com</a> on your device.</li>
@@ -53,17 +53,15 @@ export default function RulesPage() {
                 </section>
                         
                 <section>
-                  <h2 className="text-lg font-bold mb-2">How to Play</h2>
+                  <h2 className="text-2xl font-bold mb-2">How to Play</h2>
                   <p className="text-base mb-2">Each round, one team is designated as the Storyteller.</p>
                             
                   <div className="pl-3 mb-3">
                     <h3 className="text-base font-bold mb-1">The Storyteller Team:</h3>
                     <ul className="list-disc pl-5 text-base space-y-1">
-                      <li>Receives 6 cards to choose from.</li>
-                      <li>Discusses and selects one card to play.</li>
+                      <li>Discusses and submits one card from their hand.</li>
                       <li>Creates a clue to describe their chosen card.</li>
                       <li>Clues can be cryptic, abstract, movie references, song lyrics, IDEO project related, etc.</li>
-                      <li>The clue should be carefully balanced - not too obvious, not too obscure.</li>
                     </ul>
                   </div>
                             
@@ -81,7 +79,7 @@ export default function RulesPage() {
               {/* Right Column */}
               <div className="w-1/2 flex flex-col justify-center items-center space-y-8">
                 <section className="max-w-[380px]">
-                  <h2 className="text-lg font-bold mb-2 text-left">Scoring</h2>
+                  <h2 className="text-2xl font-bold mb-2 text-left">Scoring</h2>
                   
                   <table className="w-full text-sm border-collapse">
                     <thead>
@@ -125,12 +123,11 @@ export default function RulesPage() {
 
                         
                 <section className="max-w-[380px]">
-                  <h2 className="text-lg font-bold mb-2 text-left">Tips</h2>
+                  <h2 className="text-2xl font-bold mb-2 text-left">Tips</h2>
                   <ul className="list-disc pl-5 text-base space-y-1">
                     <li>Be creative with your clues!</li>
                     <li>As Storyteller, aim for a clue that some but not all teams will understand.</li>
                     <li>When guessing, pick cards that could match the clue but also attract votes.</li>
-                    <li>Discuss options with your teammates to combine different perspectives.</li>
                   </ul>
                 </section>
               </div>
