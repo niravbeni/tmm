@@ -44,7 +44,6 @@ export default function VotePage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [showOwnCardWarning, setShowOwnCardWarning] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   
@@ -91,15 +90,24 @@ export default function VotePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [teamName, isLoading, router]);
 
-  // Shuffle the cards while keeping track of their original indices
+  // Shuffle the cards while keeping track of their original indices and filter out own card
   const shuffledCards = useMemo(() => {
     if (!gameState?.playedCards) return [];
     
     // Create an array of objects with the card data and its original index
-    const indexedCards = gameState.playedCards.map((card, index) => ({
-      card,
-      originalIndex: index
-    }));
+    const indexedCards = gameState.playedCards
+      // Filter out the user's own card
+      .filter(card => card.teamName !== teamName)
+      .map((card, index) => {
+        // Find the original index in the full array
+        const originalIndex = gameState.playedCards.findIndex(c => 
+          c.teamName === card.teamName && c.card === card.card
+        );
+        return {
+          card,
+          originalIndex
+        };
+      });
     
     // Fisher-Yates shuffle algorithm
     for (let i = indexedCards.length - 1; i > 0; i--) {
@@ -108,7 +116,7 @@ export default function VotePage() {
     }
     
     return indexedCards;
-  }, [gameState?.playedCards]);
+  }, [gameState?.playedCards, teamName]);
   
   const handleSubmitVote = () => {
     if (selectedCard === null || !socket || !gameState) return;
@@ -123,16 +131,15 @@ export default function VotePage() {
       return; // This is already handled in the UI
     }
     
-    // Don't allow voting for your own card if you're not the storyteller
+    // Get the original index of the selected card
     const originalIndex = shuffledCards[selectedCard]?.originalIndex;
-    const isOwnCard = gameState.playedCards[originalIndex]?.teamName === teamName;
     
-    if (isOwnCard) {
-      setShowOwnCardWarning(true);
-      return;
-    }
+    // Calculate if this will be the last vote submission
+    const votingTeams = Object.keys(gameState.teams).filter(team => team !== gameState.storytellerTeam);
+    const currentVotesCount = gameState.votes ? Object.keys(gameState.votes).length : 0;
+    const willBeLastVote = currentVotesCount + 1 >= votingTeams.length;
     
-    setShowOwnCardWarning(false);
+    console.log(`Submitting vote: ${currentVotesCount + 1}/${votingTeams.length} votes`);
     
     // Submit vote with the original index, not the shuffled index
     socket.emit('submitVote', {
@@ -140,8 +147,11 @@ export default function VotePage() {
       votedCardIndex: originalIndex,
     });
     
-    // Use replace to prevent animation and history stacking
-    router.replace('/waiting');
+    // Immediately navigate if not the last vote
+    if (!willBeLastVote) {
+      router.replace('/waiting');
+    }
+    // Otherwise, don't navigate and let the socket event handle it
   };
   
   const nextCard = () => {
@@ -150,7 +160,6 @@ export default function VotePage() {
       prev === shuffledCards.length - 1 ? 0 : prev + 1
     );
     setSelectedCard(currentCardIndex + 1 === shuffledCards.length ? 0 : currentCardIndex + 1);
-    setShowOwnCardWarning(false); // Clear warning when changing cards
   };
   
   const prevCard = () => {
@@ -159,7 +168,6 @@ export default function VotePage() {
       prev === 0 ? shuffledCards.length - 1 : prev - 1
     );
     setSelectedCard(currentCardIndex === 0 ? shuffledCards.length - 1 : currentCardIndex - 1);
-    setShowOwnCardWarning(false); // Clear warning when changing cards
   };
   
   if (isLoading || !gameState) {
@@ -217,11 +225,6 @@ export default function VotePage() {
             }`}
             onClick={() => {
               setSelectedCard(shuffledIndex);
-              if (isOwnCard && !isStoryteller) {
-                setShowOwnCardWarning(true);
-              } else {
-                setShowOwnCardWarning(false);
-              }
             }}
           >
             <Image
@@ -247,11 +250,6 @@ export default function VotePage() {
         className="relative p-1 cursor-pointer clickable"
         onClick={() => {
           setSelectedCard(shuffledIndex);
-          if (isOwnCard && !isStoryteller) {
-            setShowOwnCardWarning(true);
-          } else {
-            setShowOwnCardWarning(false);
-          }
         }}
       >
         <div 
@@ -300,45 +298,6 @@ export default function VotePage() {
     </div>
   );
   
-  // If already voted, show waiting screen
-  if (hasVoted || isStoryteller) {
-    return (
-      <main className="flex flex-col h-full no-scroll hand-page">
-        <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
-          <div className="flex flex-wrap items-center justify-between mb-3">
-            <div className="flex items-center gap-2 flex-shrink min-w-0">
-              <div className={`status-badge ${getTeamColor(teamName)} ${getTeamTextColor(teamName)} truncate max-w-[180px] sm:max-w-[220px] md:max-w-[280px]`} title={teamName}>
-                {teamName.length > 20 ? `${teamName.substring(0, 20)}...` : teamName}
-              </div>
-              {isStoryteller && (
-                <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 whitespace-nowrap">
-                  Storyteller
-                </div>
-              )}
-            </div>
-            <div className="flex-shrink-0">
-              <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 whitespace-nowrap">
-                Round {gameState.roundNumber}
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center justify-center flex-1">
-            <div className="mb-6 w-16 h-16 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin"></div>
-            <h1 className="text-2xl font-bold mb-6 text-center">
-              {isStoryteller ? "You're the Storyteller" : "Vote Submitted"}
-            </h1>
-            <p className="text-center max-w-md mb-6">
-              {isStoryteller 
-                ? "As the storyteller, you don't need to vote. Waiting for other teams to vote..." 
-                : "Your vote has been submitted. Waiting for other teams to vote..."}
-            </p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-  
   return (
     <main className="flex flex-col h-full no-scroll vote-page">
       <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
@@ -346,87 +305,93 @@ export default function VotePage() {
         
         <div className="card p-3 mb-3">
           <p className="text-center text-sm px-2 md:px-4 mb-0">
-            Vote for the card you think belongs to <span className={`${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)} px-1.5 py-0.5`}>{gameState.storytellerTeam}</span>
+            {isStoryteller 
+              ? "As the storyteller, you don't need to vote. Other teams will vote for your card."
+              : `Vote for the card you think belongs to ${gameState.storytellerTeam} (Your card is not shown)`
+            }
           </p>
         </div>
         
-        {/* Warning when selecting own card */}
-        {showOwnCardWarning && (
-          <div className="card p-3 mb-3 bg-red-100 dark:bg-red-900">
-            <p className="text-red-800 dark:text-red-200 text-center">
-              You cannot vote for your own card! Please select another card.
+        {/* If storyteller or already voted, show waiting indicator instead of cards */}
+        {(hasVoted || isStoryteller) ? (
+          <div className="flex-1 overflow-hidden flex flex-col items-center justify-center">
+            <div className="mb-4 w-16 h-16 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-center max-w-md">
+              Waiting for other teams to vote...
             </p>
           </div>
-        )}
-        
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            {isMobile ? (
-              // Mobile view - carousel with swipe
-              <div className="h-full flex flex-col">
-                {shuffledCards.length > 0 && (
-                  <div className="flex flex-col h-full">
-                    {/* Card display area */}
-                    <div 
-                      ref={carouselRef}
-                      className="flex-grow flex items-center justify-center"
-                      onTouchStart={onTouchStart}
-                      onTouchMove={onTouchMove}
-                      onTouchEnd={onTouchEnd}
-                    >
-                      <div className="mobile-card-container">
-                        {renderCard(shuffledCards[currentCardIndex], currentCardIndex)}
+        ) : (
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {isMobile ? (
+                // Mobile view - carousel with swipe
+                <div className="h-full flex flex-col">
+                  {shuffledCards.length > 0 && (
+                    <div className="flex flex-col h-full">
+                      {/* Card display area */}
+                      <div 
+                        ref={carouselRef}
+                        className="flex-grow flex items-center justify-center"
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                      >
+                        <div className="mobile-card-container">
+                          {renderCard(shuffledCards[currentCardIndex], currentCardIndex)}
+                        </div>
+                      </div>
+                      
+                      {/* Card navigation controls */}
+                      <div className="flex items-center justify-between w-full py-3 mt-2">
+                        <button 
+                          onClick={prevCard}
+                          className="w-12 h-12 flex items-center justify-center card clickable"
+                          aria-label="Previous card"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M15 18l-6-6 6-6" />
+                          </svg>
+                        </button>
+                        <span className="text-base font-medium">
+                          {currentCardIndex + 1} / {shuffledCards.length}
+                        </span>
+                        <button 
+                          onClick={nextCard}
+                          className="w-12 h-12 flex items-center justify-center card clickable"
+                          aria-label="Next card"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
-                    
-                    {/* Card navigation controls */}
-                    <div className="flex items-center justify-between w-full py-3 mt-2">
-                      <button 
-                        onClick={prevCard}
-                        className="w-12 h-12 flex items-center justify-center card clickable"
-                        aria-label="Previous card"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                      </button>
-                      <span className="text-base font-medium">
-                        {currentCardIndex + 1} / {shuffledCards.length}
-                      </span>
-                      <button 
-                        onClick={nextCard}
-                        className="w-12 h-12 flex items-center justify-center card clickable"
-                        aria-label="Next card"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // Desktop grid layout
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-3 mx-auto w-full place-items-center px-0 pb-4">
-                {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
-              </div>
-            )}
+                  )}
+                </div>
+              ) : (
+                // Desktop grid layout
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-3 mx-auto w-full place-items-center px-0 pb-4">
+                  {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
+                </div>
+              )}
+            </div>
+            
+            {/* Submit button - fixed at bottom */}
+            <div className="py-4 pt-6 flex justify-center mt-auto action-area">
+              <button
+                onClick={handleSubmitVote}
+                disabled={selectedCard === null || gameState.currentPhase === 'lobby'}
+                className={`modern-button w-full max-w-md ${
+                  selectedCard === null || gameState.currentPhase === 'lobby'
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'clickable'
+                }`}
+              >
+                {gameState.currentPhase === 'lobby' ? 'Waiting for Game to Start' : 'Submit Vote'}
+              </button>
+            </div>
           </div>
-          
-          {/* Submit button - fixed at bottom */}
-          <div className="py-4 pt-6 flex justify-center mt-auto">
-            <button
-              onClick={handleSubmitVote}
-              disabled={selectedCard === null || showOwnCardWarning || gameState.currentPhase === 'lobby'}
-              className={`modern-button w-full max-w-md ${
-                selectedCard === null || showOwnCardWarning || gameState.currentPhase === 'lobby' ? 'opacity-50 cursor-not-allowed' : 'clickable'
-              }`}
-            >
-              {gameState.currentPhase === 'lobby' ? 'Waiting for Game to Start' : 'Submit Vote'}
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </main>
   );

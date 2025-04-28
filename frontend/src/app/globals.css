@@ -39,7 +39,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100vh;
+  min-height: 100dvh;
   max-height: 100vh;
+  max-height: 100dvh;
   overflow: hidden;
 }
 
@@ -129,7 +131,9 @@ a[aria-label="Vercel Logo"] {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
+  max-height: 100dvh;
   overflow: hidden;
 }
 
@@ -144,8 +148,8 @@ a[aria-label="Vercel Logo"] {
 @media (min-width: 769px) {
   .md\:selected-card {
     border: 2px solid #000000 !important;
-    transform: scale(1.05);
-    transition: transform 0.2s ease;
+    transform: none;
+    transition: none;
     outline: none;
     z-index: 10;
     box-sizing: border-box;
@@ -165,7 +169,7 @@ a[aria-label="Vercel Logo"] {
 .game-card {
   width: 160px;
   height: 235px;
-  transition: all 0.2s ease-in-out;
+  transition: none;
   margin-bottom: 1rem;
 }
 
@@ -225,4 +229,33 @@ a[aria-label="Vercel Logo"] {
   border-radius: 0;
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* Mobile viewport fixes */
+@media (max-width: 768px) {
+  .hand-page, .vote-page {
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Ensure the bottom action area stays visible */
+  .action-area {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    margin-top: auto;
+  }
+}
+
+/* Fix for main layout on all screen sizes */
+main {
+  min-height: 100dvh;
+  max-height: 100dvh;
+  box-sizing: border-box;
+}
+
+/* Use dynamic viewport height for pages with buttons at the bottom */
+.hand-page, .vote-page {
+  min-height: 100dvh;
+  max-height: 100dvh;
 }

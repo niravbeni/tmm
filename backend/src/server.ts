@@ -163,13 +163,11 @@ io.on('connection', (socket: any) => {
       // Ensure votes is initialized as an empty object
       gameState.votes = {};
       
-      // First send the updated gameState to all clients
+      // Send the updated gameState to all clients
       io.emit('gameStateUpdate', gameState);
       
-      // THEN emit the votePhaseStarted event
-      setTimeout(() => {
-        io.emit('votePhaseStarted');
-      }, 50);
+      // Immediately emit the votePhaseStarted event
+      io.emit('votePhaseStarted');
     }
   });
 

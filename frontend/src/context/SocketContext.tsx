@@ -107,8 +107,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     socketInstance.on('navigate', (path: string) => {
       // Never navigate away from results page
-      if (typeof window !== 'undefined' && window.location.pathname === '/results') {
-        console.log('Navigation prevented - staying on results page');
+      if (typeof window !== 'undefined' && window.location.pathname.includes('/results')) {
         return;
       }
       
@@ -121,21 +120,21 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     socketInstance.on('nextRoundStarted', () => {
       // Only navigate to hand page if not viewing the results page
-      if (typeof window !== 'undefined' && window.location.pathname !== '/results') {
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/results')) {
         router.push('/hand');
       }
     });
 
     socketInstance.on('votePhaseStarted', () => {
-      // Only navigate to vote page if not viewing the results page
-      if (typeof window !== 'undefined' && window.location.pathname !== '/results') {
+      // Only navigate to vote page if not viewing the results page and not already on vote page
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/results') && !window.location.pathname.includes('/vote')) {
         router.push('/vote');
       }
     });
 
     socketInstance.on('resultsPhaseStarted', () => {
       // Only navigate to waiting page if not viewing the results page
-      if (typeof window !== 'undefined' && window.location.pathname !== '/results') {
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/results')) {
         router.push('/waiting');
       }
     });

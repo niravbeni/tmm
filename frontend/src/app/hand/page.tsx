@@ -99,16 +99,30 @@ export default function HandPage() {
   }, [teamName, isLoading, router, gameState]);
 
   const handleSubmitCard = () => {
-    if (selectedCard === null || !socket) return;
+    if (selectedCard === null || !socket || !gameState) return;
     
-    // Emit without any animations or transitions
+    // Calculate if this will be the last card submission
+    const currentPlayedCardsCount = gameState.playedCards ? gameState.playedCards.length : 0;
+    const totalTeamsCount = Object.keys(gameState.teams).length;
+    const willBeLastSubmission = currentPlayedCardsCount + 1 >= totalTeamsCount;
+    
+    console.log(`Submitting card: ${currentPlayedCardsCount + 1}/${totalTeamsCount} submissions`);
+    
+    // Set submitted state and send card in one go
+    setHasSubmitted(true);
+    
+    // Emit card submission
     socket.emit('submitCard', {
       teamName,
       cardIndex: selectedCard,
     });
     
-    // Use replace to prevent animation and history stacking
-    router.replace('/waiting');
+    // Immediately navigate if this is not the last submission
+    // BUT DON'T update the UI first - let the navigation handle the transition
+    if (!willBeLastSubmission) {
+      router.replace('/waiting');
+    }
+    // Otherwise, socket event will handle navigation
   };
   
   const nextCard = () => {
@@ -252,95 +266,86 @@ export default function HandPage() {
           </div>
         )}
         
-        {hasSubmitted ? (
-          <div className="card p-3 mb-3 text-center">
-            <p className="text-sm md:text-base">
-              {gameState.storytellerTeam === teamName 
-                ? "You've submitted your card and provided a clue. Waiting for other teams..."
-                : "You've submitted your card! Waiting for other teams..."}
-            </p>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Instructions card for non-storytellers */}
-            {gameState.storytellerTeam !== teamName && (
-              <div className="card p-2 md:p-3 mb-3 text-sm">
-                <p>
-                  <span className="font-medium">Instructions:</span> Select a card that matches the clue from {gameState.storytellerTeam}
-                </p>
-              </div>
-            )}
-            
-            <div className="flex-1 min-h-0">
-              {isMobile ? (
-                // Mobile view - improved responsive layout
-                <div className="h-full flex flex-col">
-                  {team.hand.length > 0 && (
-                    <div className="flex flex-col h-full">
-                      {/* Card display area - takes most of the space */}
-                      <div 
-                        ref={carouselRef}
-                        className="flex-grow flex items-center justify-center"
-                        onTouchStart={onTouchStart}
-                        onTouchMove={onTouchMove}
-                        onTouchEnd={onTouchEnd}
-                      >
-                        <div className="mobile-card-container">
-                          {renderSelectedCard(team.hand[currentCardIndex])}
-                        </div>
-                      </div>
-                      
-                      {/* Card navigation controls - responsive sizing */}
-                      <div className="flex items-center justify-between w-full py-3 mt-2">
-                        <button 
-                          onClick={prevCard}
-                          className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center card clickable"
-                          aria-label="Previous card"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M15 18l-6-6 6-6" />
-                          </svg>
-                        </button>
-                        <span className="text-sm sm:text-base font-medium">
-                          {currentCardIndex + 1} / {team.hand.length}
-                        </span>
-                        <button 
-                          onClick={nextCard}
-                          className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center card clickable"
-                          aria-label="Next card"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </button>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Always show instruction for non-storytellers - never hide or change it */}
+          {gameState.storytellerTeam !== teamName && (
+            <div className="card p-2 md:p-3 mb-3 text-sm">
+              <p>
+                <span className="font-medium">Instructions:</span> Select a card that matches the clue from <span className={`${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)} px-1.5 py-0.5`}>{gameState.storytellerTeam}</span>
+              </p>
+            </div>
+          )}
+          
+          {/* Card display area - standard opacity even when submitted */}
+          <div className="flex-1 min-h-0">
+            {isMobile ? (
+              // Mobile view - same as before
+              <div className="h-full flex flex-col">
+                {team.hand.length > 0 && (
+                  <div className="flex flex-col h-full">
+                    {/* Card display area - takes most of the space */}
+                    <div 
+                      ref={carouselRef}
+                      className="flex-grow flex items-center justify-center"
+                      onTouchStart={onTouchStart}
+                      onTouchMove={onTouchMove}
+                      onTouchEnd={onTouchEnd}
+                    >
+                      <div className="mobile-card-container">
+                        {renderSelectedCard(team.hand[currentCardIndex])}
                       </div>
                     </div>
-                  )}
-                </div>
-              ) : (
-                // Desktop grid layout
-                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center px-0">
-                  {team.hand.map((card, index) => renderHandCard(card, index))}
-                </div>
-              )}
-            </div>
-            
-            {/* Submit button - fixed at bottom */}
-            {!hasSubmitted && (
-              <div className="py-4 flex justify-center">
-                <button
-                  onClick={handleSubmitCard}
-                  disabled={selectedCard === null || gameState.currentPhase === 'lobby'}
-                  className={`modern-button w-full max-w-md ${
-                    selectedCard === null || gameState.currentPhase === 'lobby' ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {gameState.currentPhase === 'lobby' ? 'Waiting for Game to Start' : 'Submit Card'}
-                </button>
+                    
+                    {/* Card navigation controls - responsive sizing */}
+                    <div className="flex items-center justify-between w-full py-3 mt-2">
+                      <button 
+                        onClick={prevCard}
+                        className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center card clickable"
+                        aria-label="Previous card"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                      </button>
+                      <span className="text-sm sm:text-base font-medium">
+                        {currentCardIndex + 1} / {team.hand.length}
+                      </span>
+                      <button 
+                        onClick={nextCard}
+                        className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center card clickable"
+                        aria-label="Next card"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Desktop grid layout
+              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center px-0">
+                {team.hand.map((card, index) => renderHandCard(card, index))}
               </div>
             )}
           </div>
-        )}
+          
+          {/* Submit button area - show disabled if submitted */}
+          <div className="py-4 flex justify-center action-area">
+            <button
+              onClick={hasSubmitted ? undefined : handleSubmitCard}
+              disabled={selectedCard === null || gameState.currentPhase === 'lobby' || hasSubmitted}
+              className={`modern-button w-full max-w-md ${
+                selectedCard === null || gameState.currentPhase === 'lobby' ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {gameState.currentPhase === 'lobby' 
+                ? 'Waiting for Game to Start' 
+                : 'Submit Card'}
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
