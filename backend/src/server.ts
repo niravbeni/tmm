@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -8,6 +8,7 @@ import { GameState } from './types';
 // Load environment variables
 dotenv.config();
 
+// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -26,7 +27,7 @@ app.use(cors({
 app.use(express.json());
 
 // API Health check endpoint
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', (req: any, res: any) => {
   res.status(200).json({ status: 'ok', environment: NODE_ENV });
 });
 
@@ -89,7 +90,7 @@ function selectRandomStoryteller() {
 }
 
 // Socket.IO event handlers
-io.on('connection', (socket) => {
+io.on('connection', (socket: any) => {
   console.log('New client connected:', socket.id);
 
   // Register team
@@ -124,7 +125,7 @@ io.on('connection', (socket) => {
   });
 
   // Submit card
-  socket.on('submitCard', ({ teamName, cardIndex }) => {
+  socket.on('submitCard', ({ teamName, cardIndex }: { teamName: string, cardIndex: number }) => {
     // Prevent card submission if game hasn't been started yet
     if (gameState.currentPhase === 'lobby') {
       console.log(`Rejected card submission from ${teamName} - game not started yet`);
@@ -173,7 +174,7 @@ io.on('connection', (socket) => {
   });
 
   // Submit vote
-  socket.on('submitVote', ({ teamName, votedCardIndex }) => {
+  socket.on('submitVote', ({ teamName, votedCardIndex }: { teamName: string, votedCardIndex: number }) => {
     // Prevent storyteller from voting
     if (teamName === gameState.storytellerTeam) {
       console.log(`Rejected vote from storyteller team ${teamName}`);
@@ -396,14 +397,14 @@ function calculateScores() {
 }
 
 // API endpoint to get game state
-app.get('/api/gamestate', (req: Request, res: Response) => {
+app.get('/api/gamestate', (req: any, res: any) => {
   // Don't expose deck in the API response
   const { deck, discardPile, ...safeGameState } = gameState;
   res.json(safeGameState);
 });
 
 // API Health check endpoint
-app.get('/api/ping', (req: Request, res: Response) => {
+app.get('/api/ping', (req: any, res: any) => {
   res.status(200).json({ message: 'pong' });
 });
 
