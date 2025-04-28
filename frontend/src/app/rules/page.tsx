@@ -36,7 +36,7 @@ export default function RulesPage() {
             
             <div className="flex flex-row gap-8 mb-2">
               {/* Left Column */}
-              <div className="w-1/2 space-y-5">
+              <div className="w-1/2 space-y-7">
                 <section>
                   <h2 className="text-lg font-bold mb-2">Goal</h2>
                   <p className="text-base">Earn the highest score by mastering the balance between being precise and being vague.</p>
@@ -79,8 +79,8 @@ export default function RulesPage() {
               </div>
               
               {/* Right Column */}
-              <div className="w-1/2 flex flex-col justify-center items-center">
-                <section className="max-w-[380px] mb-12">
+              <div className="w-1/2 flex flex-col justify-center items-center space-y-8">
+                <section className="max-w-[380px]">
                   <h2 className="text-lg font-bold mb-2 text-left">Scoring</h2>
                   
                   <table className="w-full text-sm border-collapse">
@@ -91,7 +91,7 @@ export default function RulesPage() {
                         <th className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center">Points</th>
                       </tr>
                     </thead>
-                    <tbody className="text-sm">
+                    <tbody className="text-xs">
                       <tr>
                         <td className="border border-gray-300 dark:border-gray-700 px-4 py-1" rowSpan={3}>Storyteller</td>
                         <td className="border border-gray-300 dark:border-gray-700 px-6 py-1">SOME teams find card</td>
@@ -121,6 +121,8 @@ export default function RulesPage() {
                     </tbody>
                   </table>
                 </section>
+                        
+
                         
                 <section className="max-w-[380px]">
                   <h2 className="text-lg font-bold mb-2 text-left">Tips</h2>
