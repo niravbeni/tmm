@@ -11,6 +11,9 @@ export default function RulesPage() {
       <main className="flex flex-col h-full no-scroll">
         <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
           <div className="mb-2 flex items-center justify-between">
+            <div>
+              {/* Left side - empty for now */}
+            </div>
             <div className="flex items-center space-x-2">
               <button 
                 onClick={() => router.push('/results')}
@@ -24,9 +27,6 @@ export default function RulesPage() {
               >
                 Intro
               </button>
-            </div>
-            <div className="flex space-x-2">
-              {/* Right side space reserved for future buttons if needed */}
             </div>
           </div>
 
