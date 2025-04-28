@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { MobileDetector } from '../results/page';
+import { MobileDetector } from '@/components/MobileDetector';
 
 export default function RulesPage() {
   const router = useRouter();
