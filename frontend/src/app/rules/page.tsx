@@ -36,7 +36,7 @@ export default function RulesPage() {
             
             <div className="flex flex-row gap-8 mb-2">
               {/* Left Column */}
-              <div className="w-1/2 space-y-7">
+              <div className="w-1/2 space-y-6">
                 <section>
                   <h2 className="text-lg font-bold mb-2">Goal</h2>
                   <p className="text-base">Earn the highest score by mastering the balance between being precise and being vague.</p>
