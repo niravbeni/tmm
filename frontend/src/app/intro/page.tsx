@@ -19,6 +19,14 @@ export default function IntroPage() {
                 Results
               </button>
             </div>
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => router.push('/rules')}
+                className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                Rules
+              </button>
+            </div>
           </div>
 
           <div className="card p-4 mb-3">
