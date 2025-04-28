@@ -39,7 +39,7 @@ const TEAM_TEXT_COLORS = [
 ];
 
 // Create a client-only component to handle mobile detection
-function MobileDetector({ children }: { children: React.ReactNode }) {
+export function MobileDetector({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
@@ -125,6 +125,20 @@ export default function ResultsPage() {
             <div className="mb-2 flex items-center justify-between">
               <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
                 Results - No Active Game
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => router.push('/rules')}
+                  className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  Rules
+                </button>
+                <button 
+                  onClick={() => router.push('/intro')}
+                  className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  Intro
+                </button>
               </div>
             </div>
             
@@ -295,15 +309,29 @@ export default function ResultsPage() {
           {/* Header */}
           <div className="mb-2 flex items-center justify-between">
             <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-              Results - Round {gameState.roundNumber || 'N/A'}
+              Round {gameState.roundNumber || 'N/A'}
             </div>
-            {gameState.storytellerTeam && (
-              <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
-                Storyteller:&nbsp;<span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
-                  {gameState.storytellerTeam.length > 25 ? `${gameState.storytellerTeam.substring(0, 25)}...` : gameState.storytellerTeam}
-                </span>
-              </div>
-            )}
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => router.push('/rules')}
+                className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                Rules
+              </button>
+              <button 
+                onClick={() => router.push('/intro')}
+                className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                Intro
+              </button>
+              {gameState.storytellerTeam && (
+                <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
+                  Storyteller:&nbsp;<span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
+                    {gameState.storytellerTeam.length > 25 ? `${gameState.storytellerTeam.substring(0, 25)}...` : gameState.storytellerTeam}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Scoring explanation */}
