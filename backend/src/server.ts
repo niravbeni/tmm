@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -26,7 +26,7 @@ app.use(cors({
 app.use(express.json());
 
 // API Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', environment: NODE_ENV });
 });
 
@@ -395,11 +395,16 @@ function calculateScores() {
   );
 }
 
-// API endpoint for getting current game state
-app.get('/api/gamestate', (req, res) => {
+// API endpoint to get game state
+app.get('/api/gamestate', (req: Request, res: Response) => {
   // Don't expose deck in the API response
   const { deck, discardPile, ...safeGameState } = gameState;
   res.json(safeGameState);
+});
+
+// API Health check endpoint
+app.get('/api/ping', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'pong' });
 });
 
 // Start the server

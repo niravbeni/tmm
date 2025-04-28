@@ -341,11 +341,15 @@ function calculateScores() {
     });
     console.log('Scores calculated:', Object.entries(gameState.teams).map(([teamName, team]) => `${teamName}: ${team.score}`).join(', '));
 }
-// API endpoint for getting current game state
+// API endpoint to get game state
 app.get('/api/gamestate', (req, res) => {
     // Don't expose deck in the API response
     const { deck, discardPile } = gameState, safeGameState = __rest(gameState, ["deck", "discardPile"]);
     res.json(safeGameState);
+});
+// API Health check endpoint
+app.get('/api/ping', (req, res) => {
+    res.status(200).json({ message: 'pong' });
 });
 // Start the server
 server.listen(PORT, () => {
