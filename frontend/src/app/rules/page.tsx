@@ -79,52 +79,52 @@ export default function RulesPage() {
               </div>
               
               {/* Right Column */}
-              <div className="w-1/2 flex flex-col justify-center items-center space-y-4">
-                <section className="max-w-[280px]">
-                  <h2 className="text-lg font-bold mb-2 text-center">Scoring</h2>
+              <div className="w-1/2 flex flex-col justify-center items-center space-y-6">
+                <section className="max-w-[320px]">
+                  <h2 className="text-sm font-bold mb-2 text-center">Scoring</h2>
                   
-                  <table className="w-full text-base border-collapse mb-2">
+                  <table className="w-full text-xs border-collapse">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Team</th>
-                        <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Condition</th>
-                        <th className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-center">Points</th>
+                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-1">Team</th>
+                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-1">Condition</th>
+                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center">Points</th>
                       </tr>
                     </thead>
-                    <tbody className="text-base">
+                    <tbody className="text-xs">
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5" rowSpan={3}>Storyteller</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">SOME teams find card</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-center font-bold">3</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1" rowSpan={3}>Storyteller</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">SOME teams find card</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">3</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">ALL teams find card</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-center font-bold">0</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">ALL teams find card</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">0</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">NO teams find card</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-center font-bold">0</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">NO teams find card</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">0</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5" rowSpan={3}>Other Teams</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">Finding Storyteller's card</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-center font-bold">3</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1" rowSpan={3}>Other Teams</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">Finding Storyteller's card</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">3</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">When ALL/NONE find Storyteller</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-center font-bold">2</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">When ALL/NONE find Storyteller</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">2</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">Each vote your card gets</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5 text-center font-bold">1</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">Each vote your card gets</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">1</td>
                       </tr>
                     </tbody>
                   </table>
                 </section>
                         
-                <section className="max-w-[280px]">
-                  <h2 className="text-lg font-bold mb-2 text-center">Strategy Tips</h2>
-                  <ul className="list-disc pl-5 text-base space-y-1">
+                <section className="max-w-[320px]">
+                  <h2 className="text-sm font-bold mb-2 text-center">Strategy Tips</h2>
+                  <ul className="list-disc pl-5 text-sm space-y-1">
                     <li>Be creative with your clues!</li>
                     <li>As Storyteller, aim for a clue that some but not all teams will understand.</li>
                     <li>When guessing, pick cards that could match the clue but also attract votes.</li>
