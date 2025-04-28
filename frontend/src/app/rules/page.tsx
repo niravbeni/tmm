@@ -81,9 +81,9 @@ export default function RulesPage() {
               {/* Right Column */}
               <div className="w-1/2 flex flex-col justify-center items-center space-y-4">
                 <section className="max-w-[280px]">
-                  <h2 className="text-sm font-bold mb-1 text-center">Scoring</h2>
+                  <h2 className="text-lg font-bold mb-2 text-center">Scoring</h2>
                   
-                  <table className="w-full text-xs border-collapse mb-2">
+                  <table className="w-full text-base border-collapse mb-2">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
                         <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Team</th>
@@ -91,7 +91,7 @@ export default function RulesPage() {
                         <th className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-center">Points</th>
                       </tr>
                     </thead>
-                    <tbody className="text-xs">
+                    <tbody className="text-base">
                       <tr>
                         <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5" rowSpan={3}>Storyteller</td>
                         <td className="border border-gray-300 dark:border-gray-700 px-2 py-0.5">SOME teams find card</td>
@@ -123,8 +123,8 @@ export default function RulesPage() {
                 </section>
                         
                 <section className="max-w-[280px]">
-                  <h2 className="text-sm font-bold mb-1 text-center">Strategy Tips</h2>
-                  <ul className="list-disc pl-5 text-sm space-y-0.5">
+                  <h2 className="text-lg font-bold mb-2 text-center">Strategy Tips</h2>
+                  <ul className="list-disc pl-5 text-base space-y-1">
                     <li>Be creative with your clues!</li>
                     <li>As Storyteller, aim for a clue that some but not all teams will understand.</li>
                     <li>When guessing, pick cards that could match the clue but also attract votes.</li>
