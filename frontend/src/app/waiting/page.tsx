@@ -91,10 +91,6 @@ export default function WaitingPage() {
       <div className="w-full max-w-md flex flex-col items-center">
         <div className="mb-6 w-16 h-16 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          {gameState.currentPhase === 'vote' ? 'Waiting for teams to vote...' : 'Waiting for results...'}
-        </h1>
-        
         <div className="p-6 w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <div className="flex justify-between items-start mb-4">
             <div>
