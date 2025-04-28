@@ -392,7 +392,7 @@ export default function VotePage() {
             </div>
             
             {/* Submit button - fixed at bottom */}
-            <div className="py-4 pt-6 flex justify-center mt-auto action-area">
+            <div className="py-4 md:pt-6 flex justify-center mt-auto action-area">
               <button
                 onClick={handleSubmitVote}
                 disabled={selectedCard === null || gameState.currentPhase === 'lobby'}
