@@ -45,11 +45,15 @@ export default function HandPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [submissionInProgress, setSubmissionInProgress] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+
+  // Keep a reference to the hand at the time of submission to avoid UI flicker
+  const [handAtSubmission, setHandAtSubmission] = useState<string[]>([]);
 
   const onTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setTouchEnd(null);
@@ -89,14 +93,35 @@ export default function HandPage() {
     
     // Check if device is mobile
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // If on mobile and cards are available and no card is selected, select the first card
+      if (mobile && gameState && gameState.teams && teamName && 
+          gameState.teams[teamName] && 
+          gameState.teams[teamName].hand && 
+          gameState.teams[teamName].hand.length > 0 && 
+          selectedCard === null && !hasSubmitted) {
+        setSelectedCard(0);
+      }
     };
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
-  }, [teamName, isLoading, router, gameState]);
+  }, [teamName, isLoading, router, gameState, selectedCard, hasSubmitted]);
+  
+  // Pre-select the first card once hand is loaded on mobile
+  useEffect(() => {
+    if (gameState && gameState.teams && teamName && 
+        gameState.teams[teamName] && 
+        gameState.teams[teamName].hand && 
+        gameState.teams[teamName].hand.length > 0 && 
+        isMobile && selectedCard === null && !hasSubmitted) {
+      setSelectedCard(0);
+    }
+  }, [isMobile, gameState, teamName, selectedCard, hasSubmitted]);
 
   const handleSubmitCard = () => {
     if (selectedCard === null || !socket || !gameState) return;
@@ -107,6 +132,10 @@ export default function HandPage() {
     const willBeLastSubmission = currentPlayedCardsCount + 1 >= totalTeamsCount;
     
     console.log(`Submitting card: ${currentPlayedCardsCount + 1}/${totalTeamsCount} submissions`);
+    
+    // Store the current hand to keep showing it until navigation
+    setHandAtSubmission([...gameState.teams[teamName].hand]);
+    setSubmissionInProgress(true);
     
     // Set submitted state and send card in one go
     setHasSubmitted(true);
@@ -126,19 +155,23 @@ export default function HandPage() {
   };
   
   const nextCard = () => {
-    if (!gameState?.teams[teamName]?.hand) return;
+    // Always use the displayHand for consistent navigation
+    if (!displayHand || displayHand.length === 0) return;
+    
     setCurrentCardIndex((prev) => 
-      prev === gameState.teams[teamName].hand.length - 1 ? 0 : prev + 1
+      prev === displayHand.length - 1 ? 0 : prev + 1
     );
-    setSelectedCard(currentCardIndex + 1 === gameState.teams[teamName].hand.length ? 0 : currentCardIndex + 1);
+    setSelectedCard(currentCardIndex + 1 === displayHand.length ? 0 : currentCardIndex + 1);
   };
   
   const prevCard = () => {
-    if (!gameState?.teams[teamName]?.hand) return;
+    // Always use the displayHand for consistent navigation
+    if (!displayHand || displayHand.length === 0) return;
+    
     setCurrentCardIndex((prev) => 
-      prev === 0 ? gameState.teams[teamName].hand.length - 1 : prev - 1
+      prev === 0 ? displayHand.length - 1 : prev - 1
     );
-    setSelectedCard(currentCardIndex === 0 ? gameState.teams[teamName].hand.length - 1 : currentCardIndex - 1);
+    setSelectedCard(currentCardIndex === 0 ? displayHand.length - 1 : currentCardIndex - 1);
   };
   
   if (isLoading || !gameState) {
@@ -227,13 +260,20 @@ export default function HandPage() {
             sizes="(max-width: 768px) 85vw, 70vw"
             className="object-contain"
             style={{
-              display: 'block'
+              display: 'block',
+              maxHeight: '100%',
+              maxWidth: '100%'
             }}
           />
         </div>
       </div>
     );
   };
+  
+  // Use the appropriate hand depending on submission state
+  const displayHand = submissionInProgress && handAtSubmission.length > 0
+    ? handAtSubmission
+    : team.hand;
   
   return (
     <main className="flex flex-col h-full no-scroll hand-page">
@@ -281,23 +321,23 @@ export default function HandPage() {
             {isMobile ? (
               // Mobile view - same as before
               <div className="h-full flex flex-col">
-                {team.hand.length > 0 && (
+                {displayHand.length > 0 && (
                   <div className="flex flex-col h-full">
                     {/* Card display area - takes most of the space */}
                     <div 
                       ref={carouselRef}
-                      className="flex-grow flex items-center justify-center"
+                      className="flex-grow flex items-center justify-center overflow-hidden"
                       onTouchStart={onTouchStart}
                       onTouchMove={onTouchMove}
                       onTouchEnd={onTouchEnd}
                     >
                       <div className="mobile-card-container">
-                        {renderSelectedCard(team.hand[currentCardIndex])}
+                        {renderSelectedCard(displayHand[currentCardIndex])}
                       </div>
                     </div>
                     
                     {/* Card navigation controls - responsive sizing */}
-                    <div className="flex items-center justify-between w-full py-3 mt-2">
+                    <div className="flex items-center justify-between w-full py-2">
                       <button 
                         onClick={prevCard}
                         className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center card clickable"
@@ -308,7 +348,7 @@ export default function HandPage() {
                         </svg>
                       </button>
                       <span className="text-sm sm:text-base font-medium">
-                        {currentCardIndex + 1} / {team.hand.length}
+                        {currentCardIndex + 1} / {displayHand.length}
                       </span>
                       <button 
                         onClick={nextCard}
@@ -326,7 +366,7 @@ export default function HandPage() {
             ) : (
               // Desktop grid layout
               <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center px-0">
-                {team.hand.map((card, index) => renderHandCard(card, index))}
+                {displayHand.map((card, index) => renderHandCard(card, index))}
               </div>
             )}
           </div>

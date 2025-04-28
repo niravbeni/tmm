@@ -73,23 +73,6 @@ export default function VotePage() {
     }
   };
   
-  useEffect(() => {
-    // Redirect to lobby if no team name
-    if (!teamName && !isLoading) {
-      router.push('/');
-    }
-    
-    // Check if device is mobile
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [teamName, isLoading, router]);
-
   // Shuffle the cards while keeping track of their original indices and filter out own card
   const shuffledCards = useMemo(() => {
     if (!gameState?.playedCards) return [];
@@ -117,6 +100,36 @@ export default function VotePage() {
     
     return indexedCards;
   }, [gameState?.playedCards, teamName]);
+  
+  useEffect(() => {
+    // Redirect to lobby if no team name
+    if (!teamName && !isLoading) {
+      router.push('/');
+    }
+    
+    // Check if device is mobile
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // If on mobile and we have cards, automatically select the first card
+      if (mobile && shuffledCards.length > 0 && selectedCard === null) {
+        setSelectedCard(0);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [teamName, isLoading, router, shuffledCards, selectedCard]);
+  
+  // Pre-select the first card once cards are loaded on mobile
+  useEffect(() => {
+    if (isMobile && shuffledCards.length > 0 && selectedCard === null) {
+      setSelectedCard(0);
+    }
+  }, [isMobile, shuffledCards, selectedCard]);
   
   const handleSubmitVote = () => {
     if (selectedCard === null || !socket || !gameState) return;
@@ -235,7 +248,9 @@ export default function VotePage() {
               sizes="(max-width: 768px) 85vw, 70vw"
               className="object-contain"
               style={{
-                display: 'block'
+                display: 'block',
+                maxHeight: '100%',
+                maxWidth: '100%'
               }}
             />
           </div>
@@ -331,7 +346,7 @@ export default function VotePage() {
                       {/* Card display area */}
                       <div 
                         ref={carouselRef}
-                        className="flex-grow flex items-center justify-center"
+                        className="flex-grow flex items-center justify-center overflow-hidden"
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
@@ -342,7 +357,7 @@ export default function VotePage() {
                       </div>
                       
                       {/* Card navigation controls */}
-                      <div className="flex items-center justify-between w-full py-3 mt-2">
+                      <div className="flex items-center justify-between w-full py-2">
                         <button 
                           onClick={prevCard}
                           className="w-12 h-12 flex items-center justify-center card clickable"

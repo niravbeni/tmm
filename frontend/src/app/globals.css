@@ -245,6 +245,51 @@ a[aria-label="Vercel Logo"] {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
     margin-top: auto;
   }
+  
+  /* Improved mobile card layout */
+  .vote-page .flex-1, .hand-page .flex-1 {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Make card display take all available space */
+  .vote-page .flex-grow, .hand-page .flex-grow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    height: calc(100dvh - 220px); /* Reserve space for header, instructions, and nav/buttons */
+  }
+  
+  /* Ensure mobile card fits properly in available space */
+  .mobile-card-container {
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Card navigation controls positioning */
+  .vote-page .flex-col .flex-grow + div,
+  .hand-page .flex-col .flex-grow + div {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Better spacing for small devices */
+  @media (max-height: 667px) {
+    .vote-page .flex-grow, .hand-page .flex-grow {
+      height: calc(100dvh - 200px);
+    }
+    
+    .card {
+      margin-bottom: 0.5rem;
+    }
+    
+    .vote-page .mb-3, .hand-page .mb-3 {
+      margin-bottom: 0.5rem;
+    }
+  }
 }
 
 /* Fix for main layout on all screen sizes */
