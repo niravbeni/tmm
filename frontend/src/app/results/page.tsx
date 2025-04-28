@@ -128,6 +128,16 @@ export default function ResultsPage() {
               </div>
             </div>
             
+            {/* Game Rules */}
+            <div className="card p-2 mb-3 text-xs">
+              <div className="space-y-1">
+                <p className="font-medium mb-1">Game Rules:</p>
+                <p>1. The Storyteller gives a clue about their chosen card.</p>
+                <p>2. Other players select a card from their hand that matches the clue.</p>
+                <p>3. All players vote on which card they think belongs to the Storyteller.</p>
+              </div>
+            </div>
+            
             {/* Main content */}
             <div className="flex flex-col md:flex-row gap-3 h-[calc(100%-100px)]">
               {/* Empty Scoreboard */}
