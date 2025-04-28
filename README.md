@@ -1,6 +1,6 @@
-# Dixit Workshop App
+# Say-Less Workshop App
 
-A digital card game facilitator for live, in-person workshops based on the Dixit card game concept.
+A digital card game facilitator for live, in-person workshops based on the Say-Less card game concept.
 
 ## Project Structure
 
