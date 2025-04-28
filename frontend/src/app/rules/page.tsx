@@ -30,7 +30,7 @@ export default function RulesPage() {
             </div>
           </div>
 
-          <div className="card pt-4 px-4 pb-8 mb-3">
+          <div className="card p-8 mb-3">
             <h1 className="text-xl font-bold text-center mb-2">Say Less.</h1>
             <p className="text-base italic text-center mb-6">(A Game of Precision, Vagueness, and Communication)</p>
             
@@ -118,7 +118,7 @@ export default function RulesPage() {
                   </table>
                 </section>
                         
-                <section className="mt-6 mb-4">
+                <section className="mt-6">
                   <h2 className="text-lg font-bold mb-3">Strategy Tips</h2>
                   <ul className="list-disc pl-5 text-base space-y-2">
                     <li>Be creative with your clues - think outside the box!</li>
