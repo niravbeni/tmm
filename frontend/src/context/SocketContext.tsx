@@ -55,14 +55,45 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize socket connection
-    const socketInstance = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    console.log('Connecting to backend at:', BACKEND_URL);
+    
+    // Initialize socket connection with reconnection options
+    const socketInstance = io(BACKEND_URL, {
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000,
+      transports: ['websocket', 'polling']
+    });
+    
     setSocket(socketInstance);
 
     // Socket event listeners
     socketInstance.on('connect', () => {
-      console.log('Connected to server');
+      console.log('Connected to server successfully');
       setIsLoading(false);
+    });
+    
+    socketInstance.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      setIsLoading(false);
+    });
+    
+    socketInstance.on('reconnect', (attemptNumber) => {
+      console.log(`Reconnected on attempt: ${attemptNumber}`);
+    });
+    
+    socketInstance.on('reconnect_error', (error) => {
+      console.error('Reconnection error:', error);
+    });
+    
+    socketInstance.on('disconnect', (reason) => {
+      console.log('Disconnected:', reason);
+      if (reason === 'io server disconnect') {
+        // The server has forcefully disconnected the socket
+        console.log('Attempting to reconnect...');
+        socketInstance.connect();
+      }
     });
 
     socketInstance.on('gameStateUpdate', (updatedGameState: GameState) => {

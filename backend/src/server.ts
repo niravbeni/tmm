@@ -10,10 +10,25 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+console.log('Environment:', NODE_ENV);
+console.log('Frontend URL:', FRONTEND_URL);
+console.log('Server running on port:', PORT);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: FRONTEND_URL,
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 app.use(express.json());
+
+// API Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', environment: NODE_ENV });
+});
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -21,9 +36,13 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
+    credentials: true
   },
+  // Add this configuration for better WebSocket behavior behind proxies
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
 });
 
 // Card deck functions

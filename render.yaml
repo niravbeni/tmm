@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: dixit-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        fromService:
+          name: dixit-frontend
+          type: static_site
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: static_site
+    name: dixit-frontend
+    env: node
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/out
+    envVars:
+      - key: NEXT_PUBLIC_BACKEND_URL
+        fromService:
+          name: dixit-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL 
