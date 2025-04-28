@@ -329,9 +329,9 @@ export default function VotePage() {
         
         {/* If storyteller or already voted, show waiting indicator instead of cards */}
         {(hasVoted || isStoryteller) ? (
-          <div className="flex-1 overflow-hidden flex flex-col items-center justify-center">
+          <div className="flex-1 overflow-hidden flex flex-col items-center justify-center py-8">
             <div className="mb-4 w-16 h-16 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-center max-w-md">
+            <p className="text-center max-w-md px-4">
               Waiting for other teams to vote...
             </p>
           </div>

@@ -88,7 +88,7 @@ export default function WaitingPage() {
   
   return (
     <main className="flex flex-col items-center justify-center p-4 h-full">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md flex flex-col items-center">
         <div className="mb-6 w-16 h-16 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         
         <h1 className="text-2xl font-bold mb-4 text-center">
