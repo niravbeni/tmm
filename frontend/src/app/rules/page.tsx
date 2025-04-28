@@ -31,7 +31,7 @@ export default function RulesPage() {
           </div>
 
           <div className="card p-8 mb-3">
-            <h1 className="text-xl font-bold text-center mb-2">Say Less.</h1>
+            <h1 className="text-3xl font-bold text-center mb-1">Say Less.</h1>
             <p className="text-base italic text-center mb-6">(A Game of Precision, Vagueness, and Communication)</p>
             
             <div className="flex flex-row gap-8 mb-2">
@@ -79,11 +79,11 @@ export default function RulesPage() {
               </div>
               
               {/* Right Column */}
-              <div className="w-1/2 flex flex-col justify-center items-center space-y-8">
-                <section className="max-w-[380px]">
-                  <h2 className="text-sm font-bold mb-2 text-center">Scoring</h2>
+              <div className="w-1/2 flex flex-col justify-center items-center">
+                <section className="max-w-[380px] mb-12">
+                  <h2 className="text-lg font-bold mb-2 text-left">Scoring</h2>
                   
-                  <table className="w-full text-xs border-collapse">
+                  <table className="w-full text-sm border-collapse">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
                         <th className="border border-gray-300 dark:border-gray-700 px-4 py-1">Team</th>
@@ -91,7 +91,7 @@ export default function RulesPage() {
                         <th className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center">Points</th>
                       </tr>
                     </thead>
-                    <tbody className="text-xs">
+                    <tbody className="text-sm">
                       <tr>
                         <td className="border border-gray-300 dark:border-gray-700 px-4 py-1" rowSpan={3}>Storyteller</td>
                         <td className="border border-gray-300 dark:border-gray-700 px-6 py-1">SOME teams find card</td>
@@ -123,8 +123,8 @@ export default function RulesPage() {
                 </section>
                         
                 <section className="max-w-[380px]">
-                  <h2 className="text-sm font-bold mb-2 text-center">Strategy Tips</h2>
-                  <ul className="list-disc pl-5 text-sm space-y-1">
+                  <h2 className="text-lg font-bold mb-2 text-left">Tips</h2>
+                  <ul className="list-disc pl-5 text-base space-y-1">
                     <li>Be creative with your clues!</li>
                     <li>As Storyteller, aim for a clue that some but not all teams will understand.</li>
                     <li>When guessing, pick cards that could match the clue but also attract votes.</li>
