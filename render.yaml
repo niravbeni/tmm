@@ -12,10 +12,10 @@ services:
       - key: FRONTEND_URL
         fromService:
           name: say-less-frontend
-          type: static_site
+          type: static
           envVarKey: RENDER_EXTERNAL_URL
 
-  - type: static_site
+  - type: static
     name: say-less-frontend
     env: node
     buildCommand: cd frontend && npm install && npm run build
