@@ -8,21 +8,25 @@ export default function RulesPage() {
 
   return (
     <MobileDetector>
-      <main className="flex flex-col h-full p-4">
-        <div className="w-full mx-auto max-w-5xl">
-          <div className="mb-4 flex items-center">
-            <button 
-              onClick={() => router.push('/results')}
-              className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              Results
-            </button>
+      <main className="flex flex-col h-full no-scroll">
+        <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => router.push('/results')}
+                className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                Results
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-3xl font-bold mb-6">Game Rules</h1>
-
-          <div className="card p-6">
-            <p className="text-lg">Rules content will go here.</p>
+          <div className="card p-4 mb-3">
+            <h1 className="text-xl font-bold mb-4">Game Rules</h1>
+            
+            <div className="space-y-4">
+              <p className="text-sm">Rules content will go here.</p>
+            </div>
           </div>
         </div>
       </main>
