@@ -106,9 +106,13 @@ export default function RulesPage() {
                         <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">0</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1" rowSpan={2}>Other Teams</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1" rowSpan={3}>Other Teams</td>
                         <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">Finding Storyteller's card</td>
                         <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">3</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">When ALL/NONE find Storyteller</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-1 text-center font-bold">2</td>
                       </tr>
                       <tr>
                         <td className="border border-gray-300 dark:border-gray-700 px-3 py-1">Each vote your card gets</td>
