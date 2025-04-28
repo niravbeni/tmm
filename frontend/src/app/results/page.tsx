@@ -123,8 +123,10 @@ export default function ResultsPage() {
           <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
             {/* Header */}
             <div className="mb-2 flex items-center justify-between">
-              <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-                Results - No Active Game
+              <div className="flex items-center space-x-2">
+                <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                  No Active Game
+                </div>
               </div>
               <div className="flex space-x-2">
                 <button 
@@ -308,8 +310,17 @@ export default function ResultsPage() {
         <div className="w-full mx-auto flex flex-col p-4 pb-4 h-full">
           {/* Header */}
           <div className="mb-2 flex items-center justify-between">
-            <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-              Round {gameState.roundNumber || 'N/A'}
+            <div className="flex items-center space-x-2">
+              <div className="status-badge bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                Round {gameState.roundNumber || 'N/A'}
+              </div>
+              {gameState.storytellerTeam && (
+                <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
+                  Storyteller:&nbsp;<span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
+                    {gameState.storytellerTeam.length > 25 ? `${gameState.storytellerTeam.substring(0, 25)}...` : gameState.storytellerTeam}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flex space-x-2">
               <button 
@@ -324,13 +335,6 @@ export default function ResultsPage() {
               >
                 Intro
               </button>
-              {gameState.storytellerTeam && (
-                <div className={`status-badge ${getTeamColor(gameState.storytellerTeam)} ${getTeamTextColor(gameState.storytellerTeam)}`}>
-                  Storyteller:&nbsp;<span className="truncate inline-block max-w-[220px] align-bottom" title={gameState.storytellerTeam}>
-                    {gameState.storytellerTeam.length > 25 ? `${gameState.storytellerTeam.substring(0, 25)}...` : gameState.storytellerTeam}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
           
