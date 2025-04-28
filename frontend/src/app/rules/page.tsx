@@ -79,11 +79,11 @@ export default function RulesPage() {
               </div>
               
               {/* Right Column */}
-              <div className="w-1/2 flex flex-col justify-center space-y-4">
-                <section>
-                  <h2 className="text-base font-bold mb-1">Scoring</h2>
+              <div className="w-1/2 flex flex-col justify-center items-center space-y-4">
+                <section className="max-w-[280px]">
+                  <h2 className="text-sm font-bold mb-1 text-center">Scoring</h2>
                   
-                  <table className="w-auto text-xs border-collapse mb-2">
+                  <table className="w-full text-xs border-collapse mb-2">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
                         <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Team</th>
@@ -122,9 +122,9 @@ export default function RulesPage() {
                   </table>
                 </section>
                         
-                <section>
-                  <h2 className="text-base font-bold mb-1">Strategy Tips</h2>
-                  <ul className="list-disc pl-4 text-xs space-y-0.5">
+                <section className="max-w-[280px]">
+                  <h2 className="text-sm font-bold mb-1 text-center">Strategy Tips</h2>
+                  <ul className="list-disc pl-5 text-sm space-y-0.5">
                     <li>Be creative with your clues!</li>
                     <li>As Storyteller, aim for a clue that some but not all teams will understand.</li>
                     <li>When guessing, pick cards that could match the clue but also attract votes.</li>
