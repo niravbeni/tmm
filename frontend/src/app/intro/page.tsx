@@ -25,7 +25,8 @@ export default function IntroPage() {
   // Function to calculate coordinates based on element positions
   const calculateCoordinates = () => {
     if (precisionRef.current && meaningRef.current && vagueRef.current && creativityRef.current) {
-      const containerRect = precisionRef.current.closest('.relative')?.getBoundingClientRect() || { left: 0, top: 0 };
+      // Get the SVG container directly
+      const svgContainer = document.querySelector('svg.absolute')?.getBoundingClientRect() || { left: 0, top: 0 };
       
       const precisionRect = precisionRef.current.getBoundingClientRect();
       const meaningRect = meaningRef.current.getBoundingClientRect();
@@ -53,26 +54,26 @@ export default function IntroPage() {
         y: creativityRect.top
       };
       
-      // Get the coordinates relative to the container
+      // Get the coordinates relative to the SVG container
       setPrecisionCoords({
         start: { 
-          x: precisionCenter.x - containerRect.left,
-          y: precisionCenter.y - containerRect.top
+          x: precisionCenter.x - svgContainer.left,
+          y: precisionCenter.y - svgContainer.top
         },
         end: { 
-          x: meaningCenter.x - containerRect.left,
-          y: meaningCenter.y - containerRect.top
+          x: meaningCenter.x - svgContainer.left,
+          y: meaningCenter.y - svgContainer.top
         }
       });
       
       setVagueCoords({
         start: { 
-          x: vagueCenter.x - containerRect.left,
-          y: vagueCenter.y - containerRect.top
+          x: vagueCenter.x - svgContainer.left,
+          y: vagueCenter.y - svgContainer.top
         },
         end: { 
-          x: creativityCenter.x - containerRect.left,
-          y: creativityCenter.y - containerRect.top
+          x: creativityCenter.x - svgContainer.left,
+          y: creativityCenter.y - svgContainer.top
         }
       });
 
@@ -338,7 +339,7 @@ export default function IntroPage() {
                       setShowVagueLine(!showVagueLine);
                     }}
                   >
-                    Vague
+                    Vagueness
                   </div>
                 </div>
               </div>
@@ -362,4 +363,4 @@ export default function IntroPage() {
       </main>
     </MobileDetector>
   );
-} 
+}
