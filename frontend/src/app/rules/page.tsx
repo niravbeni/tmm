@@ -30,7 +30,7 @@ export default function RulesPage() {
             </div>
           </div>
 
-          <div className="card p-8 mb-3">
+          <div className="card p-8 mb-3 min-h-[92vh] flex flex-col">
             <h1 className="text-3xl font-bold text-center mb-1">Say Less.</h1>
             <p className="text-base italic text-center mb-4">(A Game of Precision, Vagueness, and Communication)</p>
             

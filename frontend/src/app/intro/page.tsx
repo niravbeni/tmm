@@ -23,6 +23,13 @@ export default function IntroPage() {
   // Add a shared timestamp for synchronized animations
   const [moveTogetherTimestamp, setMoveTogetherTimestamp] = useState(0);
   
+  // State for creativity floating animation
+  const [startCreativityFloat, setStartCreativityFloat] = useState(false);
+  const [creativityFrozen, setCreativityFrozen] = useState(false);
+  const [creativityPosition, setCreativityPosition] = useState(0);
+  const [creativityStartTime, setCreativityStartTime] = useState(0);
+  const [creativityPauseTime, setCreativityPauseTime] = useState(0);
+  
   const precisionRef = useRef<HTMLDivElement>(null);
   const meaningRef = useRef<HTMLDivElement>(null);
   const vagueRef = useRef<HTMLDivElement>(null);
@@ -143,7 +150,61 @@ export default function IntroPage() {
     }
   }, [vagueCoords, showVagueLine, vaguePath]);
   
-  // Handle precision click
+  // Start creativity floating animation after a delay once the collision animation completes
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (finalPositioning && !startCreativityFloat) {
+      timer = setTimeout(() => {
+        setStartCreativityFloat(true);
+        setCreativityStartTime(Date.now());
+      }, 1000); // 2 second delay after final positioning before creativity starts floating
+    }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [finalPositioning, startCreativityFloat]);
+  
+  // Function to calculate current position of creativity based on time elapsed
+  const calculateCreativityPosition = () => {
+    if (!startCreativityFloat) return 0;
+    
+    const totalDuration = 10000; // 10 seconds in milliseconds
+    const totalDistance = 400; // 400px total distance
+    
+    let elapsedTime;
+    
+    if (creativityFrozen) {
+      // If frozen, use the time when it was paused
+      elapsedTime = creativityPauseTime - creativityStartTime;
+    } else {
+      // If not frozen, calculate based on current time
+      elapsedTime = Date.now() - creativityStartTime;
+    }
+    
+    // Ensure we don't exceed the total animation time
+    elapsedTime = Math.min(elapsedTime, totalDuration);
+    
+    // Calculate position based on elapsed time (linear motion)
+    return (elapsedTime / totalDuration) * totalDistance;
+  };
+  
+  // Update creativity position
+  useEffect(() => {
+    if (!startCreativityFloat || creativityFrozen) return;
+    
+    const updatePosition = () => {
+      setCreativityPosition(calculateCreativityPosition());
+    };
+    
+    const intervalId = setInterval(updatePosition, 16); // ~60fps
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [startCreativityFloat, creativityFrozen]);
+  
+  // Reset everything on third click
   const handlePrecisionClick = () => {
     const newClickCount = precisionClicks + 1;
     setPrecisionClicks(newClickCount);
@@ -168,6 +229,11 @@ export default function IntroPage() {
       setMovingTogether(false);
       setFinalPositioning(false);
       setLineColorSwap(false);
+      setStartCreativityFloat(false);
+      setCreativityFrozen(false);
+      setCreativityPosition(0);
+      setCreativityStartTime(0);
+      setCreativityPauseTime(0);
       setPrecisionClicks(0);
     }
   };
@@ -288,12 +354,12 @@ export default function IntroPage() {
             </div>
           </div>
 
-          <div className="card p-8 mb-3">
+          <div className="card p-8 mb-3 min-h-[92vh] flex flex-col">
             <h1 className="text-3xl font-bold text-center mb-1">Say Less.</h1>
             <p className="text-base italic text-center mb-4">(A Game of Precision, Vagueness, and Communication)</p>
             
             {/* Diagram container with perfect spacing */}
-            <div className="flex flex-col items-center justify-center mt-12 relative">
+            <div className="flex flex-col items-center justify-center mt-12 relative flex-grow">
               {/* SVG container for both lines - positioned behind text with lower z-index */}
               <svg
                 className="absolute top-0 left-0 w-full h-full pointer-events-none"
@@ -483,12 +549,48 @@ export default function IntroPage() {
                   </div>
                 </div>
                 <div className="flex justify-center">
-                  <div ref={creativityRef} className="text-xl font-semibold">
+                  <motion.div 
+                    ref={creativityRef} 
+                    className="text-xl font-semibold cursor-pointer"
+                    style={{ y: creativityPosition }}
+                    onPointerDown={() => {
+                      if (startCreativityFloat) {
+                        setCreativityFrozen(true);
+                        setCreativityPauseTime(Date.now());
+                      }
+                    }}
+                    onPointerUp={() => {
+                      if (startCreativityFloat && creativityFrozen) {
+                        setCreativityFrozen(false);
+                        // Update the start time to resume animation from current position
+                        setCreativityStartTime(prev => Date.now() - (creativityPauseTime - prev));
+                      }
+                    }}
+                    onPointerLeave={() => {
+                      if (startCreativityFloat && creativityFrozen) {
+                        setCreativityFrozen(false);
+                        // Update the start time to resume animation from current position
+                        setCreativityStartTime(prev => Date.now() - (creativityPauseTime - prev));
+                      }
+                    }}
+                  >
                     Creativity
-                  </div>
+                  </motion.div>
                 </div>
               </div>
             </div>
+            
+            {/* Full-width horizontal line positioned at appropriate height */}
+            <div 
+              className="w-full pointer-events-none mt-auto"
+              style={{ 
+                height: '2px', 
+                backgroundColor: 'black',
+                marginTop: '180px',
+                marginBottom: '120px',
+                zIndex: 10 
+              }}
+            />
           </div>
         </div>
       </main>
