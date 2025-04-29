@@ -282,7 +282,7 @@ export default function IntroPage() {
                   <>
                     <motion.path
                       d={vaguePath}
-                      stroke="#9333ea"
+                      stroke="#dc2626"
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -298,7 +298,7 @@ export default function IntroPage() {
                     {/* Arrow head at the end */}
                     <motion.path
                       d={vagueArrowPath}
-                      stroke="#9333ea"
+                      stroke="#dc2626"
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -329,7 +329,7 @@ export default function IntroPage() {
                 <div className="flex justify-center">
                   <div 
                     ref={vagueRef}
-                    className={`text-xl font-semibold cursor-pointer ${showVagueLine ? 'text-purple-600' : ''}`}
+                    className={`text-xl font-semibold cursor-pointer ${showVagueLine ? 'text-red-600' : ''}`}
                     onClick={() => {
                       if (showVagueLine) {
                         setVaguePath("");
