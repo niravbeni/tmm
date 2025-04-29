@@ -45,7 +45,7 @@ export default function RulesPage() {
                 <section>
                   <h2 className="text-2xl font-bold mb-2">Getting Started</h2>
                   <ul className="list-disc pl-5 text-base space-y-1">
-                    <li>Form teams of 2-3 people each (ideally 6-12 teams total).</li>
+                    <li>Form teams of 2-4 people each (ideally 6-12 teams total).</li>
                     <li>Open <a href="https://say-less.onrender.com" className="text-blue-600 underline">say-less.onrender.com</a> on your device.</li>
                     <li>Enter your team name and join the game.</li>
                     <li>Wait for the host to start the game.</li>
