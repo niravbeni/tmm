@@ -236,52 +236,10 @@ export default function IntroPage() {
             
             {/* Diagram container with perfect spacing */}
             <div className="flex flex-col items-center justify-center mt-12 relative">
-              {/* Top row: Precision and Vague */}
-              <div className="grid grid-cols-2 w-full max-w-lg mb-28">
-                <div className="flex justify-center">
-                  <div 
-                    ref={precisionRef}
-                    className={`text-xl font-semibold cursor-pointer ${showPrecisionLine ? 'text-blue-600' : ''}`}
-                    onClick={() => setShowPrecisionLine(!showPrecisionLine)}
-                  >
-                    Precision
-                  </div>
-                </div>
-                <div className="flex justify-center">
-                  <div 
-                    ref={vagueRef}
-                    className={`text-xl font-semibold cursor-pointer ${showVagueLine ? 'text-purple-600' : ''}`}
-                    onClick={() => {
-                      if (showVagueLine) {
-                        setVaguePath("");
-                        setVagueArrowPath("");
-                      }
-                      setShowVagueLine(!showVagueLine);
-                    }}
-                  >
-                    Vague
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom row: Meaning and Creativity */}
-              <div className="grid grid-cols-2 w-full max-w-lg">
-                <div className="flex justify-center">
-                  <div ref={meaningRef} className="text-xl font-semibold">
-                    Meaning
-                  </div>
-                </div>
-                <div className="flex justify-center">
-                  <div ref={creativityRef} className="text-xl font-semibold">
-                    Creativity
-                  </div>
-                </div>
-              </div>
-
-              {/* SVG container for both lines */}
+              {/* SVG container for both lines - positioned behind text with lower z-index */}
               <svg
                 className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                style={{ overflow: 'visible' }}
+                style={{ overflow: 'visible', zIndex: 0 }}
               >
                 {/* Precision to Meaning arrow line */}
                 {showPrecisionLine && (
@@ -356,6 +314,48 @@ export default function IntroPage() {
                   </>
                 )}
               </svg>
+
+              {/* Top row: Precision and Vague */}
+              <div className="grid grid-cols-2 w-full max-w-lg mb-28 relative z-10">
+                <div className="flex justify-center">
+                  <div 
+                    ref={precisionRef}
+                    className={`text-xl font-semibold cursor-pointer ${showPrecisionLine ? 'text-blue-600' : ''}`}
+                    onClick={() => setShowPrecisionLine(!showPrecisionLine)}
+                  >
+                    Precision
+                  </div>
+                </div>
+                <div className="flex justify-center">
+                  <div 
+                    ref={vagueRef}
+                    className={`text-xl font-semibold cursor-pointer ${showVagueLine ? 'text-purple-600' : ''}`}
+                    onClick={() => {
+                      if (showVagueLine) {
+                        setVaguePath("");
+                        setVagueArrowPath("");
+                      }
+                      setShowVagueLine(!showVagueLine);
+                    }}
+                  >
+                    Vague
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom row: Meaning and Creativity */}
+              <div className="grid grid-cols-2 w-full max-w-lg relative z-10">
+                <div className="flex justify-center">
+                  <div ref={meaningRef} className="text-xl font-semibold">
+                    Meaning
+                  </div>
+                </div>
+                <div className="flex justify-center">
+                  <div ref={creativityRef} className="text-xl font-semibold">
+                    Creativity
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
