@@ -10,6 +10,19 @@ export default function IntroPage() {
   const [showPrecisionLine, setShowPrecisionLine] = useState(false);
   const [showVagueLine, setShowVagueLine] = useState(false);
   
+  // State for the magnetic animation
+  const [precisionClicks, setPrecisionClicks] = useState(0);
+  const [showMagneticAnimation, setShowMagneticAnimation] = useState(false);
+  const [startAttraction, setStartAttraction] = useState(false);
+  const [precisionCollided, setPrecisionCollided] = useState(false);
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [movingTogether, setMovingTogether] = useState(false);
+  const [finalPositioning, setFinalPositioning] = useState(false);
+  const [lineColorSwap, setLineColorSwap] = useState(false);
+  
+  // Add a shared timestamp for synchronized animations
+  const [moveTogetherTimestamp, setMoveTogetherTimestamp] = useState(0);
+  
   const precisionRef = useRef<HTMLDivElement>(null);
   const meaningRef = useRef<HTMLDivElement>(null);
   const vagueRef = useRef<HTMLDivElement>(null);
@@ -17,6 +30,10 @@ export default function IntroPage() {
   
   const [precisionCoords, setPrecisionCoords] = useState({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
   const [vagueCoords, setVagueCoords] = useState({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
+  
+  // Store original positions for animation
+  const [originalPrecisionPosition, setOriginalPrecisionPosition] = useState({ x: 0, y: 0 });
+  const [originalVaguePosition, setOriginalVaguePosition] = useState({ x: 0, y: 0 });
   
   // Store vague path to prevent it from changing when precision is toggled
   const [vaguePath, setVaguePath] = useState("");
@@ -32,6 +49,17 @@ export default function IntroPage() {
       const meaningRect = meaningRef.current.getBoundingClientRect();
       const vagueRect = vagueRef.current.getBoundingClientRect();
       const creativityRect = creativityRef.current.getBoundingClientRect();
+      
+      // Store original positions for animation
+      setOriginalPrecisionPosition({
+        x: precisionRect.left + precisionRect.width / 2,
+        y: precisionRect.top + precisionRect.height / 2
+      });
+      
+      setOriginalVaguePosition({
+        x: vagueRect.left + vagueRect.width / 2,
+        y: vagueRect.top + vagueRect.height / 2
+      });
       
       // Calculate the center points of each element
       const precisionCenter = {
@@ -114,6 +142,35 @@ export default function IntroPage() {
       setVagueArrowPath(arrowPath);
     }
   }, [vagueCoords, showVagueLine, vaguePath]);
+  
+  // Handle precision click
+  const handlePrecisionClick = () => {
+    const newClickCount = precisionClicks + 1;
+    setPrecisionClicks(newClickCount);
+    
+    if (newClickCount === 1) {
+      // First click - show precision line
+      setShowPrecisionLine(true);
+    } else if (newClickCount === 2) {
+      // Second click - immediately turn precision text red
+      setShowMagneticAnimation(true);
+      
+      // But delay the start of the actual movement
+      setTimeout(() => {
+        setStartAttraction(true);
+      }, 800); // 800ms delay before vagueness starts moving
+    } else {
+      // Reset everything on third click but keep lines visible if they were
+      setShowMagneticAnimation(false);
+      setStartAttraction(false);
+      setPrecisionCollided(false);
+      setAnimationComplete(false);
+      setMovingTogether(false);
+      setFinalPositioning(false);
+      setLineColorSwap(false);
+      setPrecisionClicks(0);
+    }
+  };
 
   // Create the precision path
   const createPrecisionPath = () => {
@@ -247,7 +304,7 @@ export default function IntroPage() {
                   <>
                     <motion.path
                       d={createPrecisionPath()}
-                      stroke="#3b82f6"
+                      stroke={showMagneticAnimation && !lineColorSwap ? "#dc2626" : "#3b82f6"}
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -262,7 +319,7 @@ export default function IntroPage() {
                     {/* Arrow head */}
                     <motion.path
                       d={createPrecisionArrow()}
-                      stroke="#3b82f6"
+                      stroke={showMagneticAnimation && !lineColorSwap ? "#dc2626" : "#3b82f6"}
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -283,7 +340,7 @@ export default function IntroPage() {
                   <>
                     <motion.path
                       d={vaguePath}
-                      stroke="#dc2626"
+                      stroke="#3b82f6"
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -299,7 +356,7 @@ export default function IntroPage() {
                     {/* Arrow head at the end */}
                     <motion.path
                       d={vagueArrowPath}
-                      stroke="#dc2626"
+                      stroke="#3b82f6"
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -319,18 +376,58 @@ export default function IntroPage() {
               {/* Top row: Precision and Vague */}
               <div className="grid grid-cols-2 w-full max-w-lg mb-28 relative z-10">
                 <div className="flex justify-center">
-                  <div 
+                  {/* Precision Text with Animation */}
+                  <motion.div 
                     ref={precisionRef}
-                    className={`text-xl font-semibold cursor-pointer ${showPrecisionLine ? 'text-blue-600' : ''}`}
-                    onClick={() => setShowPrecisionLine(!showPrecisionLine)}
+                    className={`text-xl font-semibold cursor-pointer ${
+                      showPrecisionLine && !showMagneticAnimation ? 'text-blue-600' : 
+                      showMagneticAnimation ? 'text-red-600' : ''
+                    }`}
+                    onClick={handlePrecisionClick}
+                    animate={
+                      showMagneticAnimation && !precisionCollided ? {
+                        // Hold position until collision
+                        x: 0
+                      } : movingTogether ? {
+                        // Move both together to left so V sits at original P position
+                        x: -65, // Move further left to avoid overlap
+                        transition: {
+                          type: "tween", // Use tween for consistent movement
+                          ease: "easeOut",
+                          duration: 0.5,
+                          // Use a timestamp to ensure animations start at the exact same time
+                          delay: 0.02, // Small delay to ensure this happens after Vagueness starts moving
+                          onComplete: () => {
+                            // After moving together, trigger the small bump and color change
+                            setMovingTogether(false);
+                            setFinalPositioning(true);
+                            // Swap the line color back to blue
+                            setLineColorSwap(true);
+                          }
+                        }
+                      } : finalPositioning ? {
+                        // Final small bump of precision to the left
+                        x: -100, // Reduced from -110px for a smaller final bump
+                        transition: {
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                          duration: 0.4
+                        }
+                      } : {}
+                    }
                   >
                     Precision
-                  </div>
+                  </motion.div>
                 </div>
                 <div className="flex justify-center">
-                  <div 
+                  {/* Vagueness Text with Magnetic Animation */}
+                  <motion.div 
                     ref={vagueRef}
-                    className={`text-xl font-semibold cursor-pointer ${showVagueLine ? 'text-red-600' : ''}`}
+                    className={`text-xl font-semibold cursor-pointer ${
+                      showVagueLine ? 'text-blue-600' : 
+                      lineColorSwap ? 'text-blue-600' : ''
+                    }`}
                     onClick={() => {
                       if (showVagueLine) {
                         setVaguePath("");
@@ -338,9 +435,43 @@ export default function IntroPage() {
                       }
                       setShowVagueLine(!showVagueLine);
                     }}
+                    animate={
+                      startAttraction && !precisionCollided ? {
+                        // Initial attraction - move toward precision
+                        x: (originalPrecisionPosition.x - originalVaguePosition.x) + 100, // Collision point much further to the right
+                        transition: {
+                          type: "tween", // Use tween instead of spring to avoid bounce
+                          ease: "easeOut", // Ease out for smooth movement without bounce
+                          duration: 1.3,  // Reduced from 1.8s for faster initial movement
+                          onComplete: () => {
+                            setPrecisionCollided(true);
+                            setMovingTogether(true);
+                            // Set timestamp for synchronized animations
+                            setMoveTogetherTimestamp(Date.now());
+                          }
+                        }
+                      } : movingTogether ? {
+                        // Move to exactly where Precision originally was
+                        x: originalPrecisionPosition.x - originalVaguePosition.x + 30, // Offset further to prevent overlap
+                        transition: {
+                          type: "tween", // Use tween instead of spring for consistent movement
+                          ease: "easeOut",
+                          duration: 0.5,
+                        }
+                      } : finalPositioning ? {
+                        // Final position exactly at precision's original position
+                        x: originalPrecisionPosition.x - originalVaguePosition.x,
+                        transition: {
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                          duration: 0.6
+                        }
+                      } : {}
+                    }
                   >
                     Vagueness
-                  </div>
+                  </motion.div>
                 </div>
               </div>
 
