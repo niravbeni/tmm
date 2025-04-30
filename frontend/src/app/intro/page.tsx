@@ -45,6 +45,10 @@ export default function IntroPage() {
   const [contactPosition, setContactPosition] = useState({ left: 0, top: 0 });
   const [seesaw, setSeesaw] = useState(false);
   
+  // Vagueness draggable state
+  const [vagueDraggable, setVagueDraggable] = useState(false);
+  const [vagueDragPosition, setVagueDragPosition] = useState({ x: 0, y: 0 });
+  
   // References for container and elements
   const containerRef = useRef<HTMLDivElement>(null);
   const precisionRef = useRef<HTMLDivElement>(null);
@@ -200,7 +204,8 @@ export default function IntroPage() {
   const calculateCreativityPosition = () => {
     if (!startCreativityFloat) return 0;
     
-    const totalDuration = 10000; // 10 seconds in milliseconds
+    // Change to faster and more constant motion
+    const totalDuration = 5000; // Reduce to 5 seconds for faster falling
     const totalDistance = 400; // 400px total distance
     
     let elapsedTime;
@@ -216,8 +221,13 @@ export default function IntroPage() {
     // Ensure we don't exceed the total animation time
     elapsedTime = Math.min(elapsedTime, totalDuration);
     
-    // Calculate position based on elapsed time (linear motion)
-    return (elapsedTime / totalDuration) * totalDistance;
+    // Apply an easing function that accelerates slightly (simulating gravity)
+    // This will start a bit slower and then speed up (more natural falling motion)
+    const progress = elapsedTime / totalDuration;
+    const easedProgress = progress * progress; // Quadratic easing for acceleration
+    
+    // Calculate position with acceleration
+    return easedProgress * totalDistance;
   };
   
   // Update creativity position and check for collision with horizontal line
@@ -268,6 +278,21 @@ export default function IntroPage() {
               // Small delay after shake before rotating
               setTimeout(() => {
                 setLineRotation(5);
+                
+                // Make vagueness draggable after rotation starts
+                setTimeout(() => {
+                  // Initialize vagueDragPosition with the final position
+                  if (vagueRef.current && containerRef.current) {
+                    const vagueRect = vagueRef.current.getBoundingClientRect();
+                    const containerRect = containerRef.current.getBoundingClientRect();
+                    const initialX = vagueRect.left - containerRect.left - (originalVaguePosition.x - originalVaguePosition.x);
+                    setVagueDragPosition({ 
+                      x: originalPrecisionPosition.x - originalVaguePosition.x,
+                      y: 0 
+                    });
+                  }
+                  setVagueDraggable(true);
+                }, 1000); // Wait 1 second after rotation starts
               }, 200);
             }, 600); // Shake for 600ms
           }, 50);
@@ -418,6 +443,34 @@ export default function IntroPage() {
       });
     }
   }, []);
+
+  // Reset vagueness position on component unmount
+  useEffect(() => {
+    return () => {
+      setVagueDragPosition({ x: 0, y: 0 });
+    };
+  }, []);
+
+  // Inside the component return, add a useEffect to ensure full container constraints
+  useEffect(() => {
+    if (vagueDraggable && containerRef.current && vagueRef.current) {
+      // Set z-index to ensure it's above other elements when dragging
+      if (vagueRef.current) {
+        vagueRef.current.style.zIndex = "50";
+        vagueRef.current.style.position = "relative";
+      }
+    }
+  }, [vagueDraggable]);
+
+  // Modify the onClick of creativityRef to not interfere with dragging
+  useEffect(() => {
+    if (creativityRef.current) {
+      creativityRef.current.style.pointerEvents = vagueDraggable ? "none" : "auto";
+    }
+    if (horizontalLineRef.current) {
+      horizontalLineRef.current.style.pointerEvents = "none";
+    }
+  }, [vagueDraggable]);
 
   return (
     <MobileDetector>
@@ -587,13 +640,23 @@ export default function IntroPage() {
                       lineColorSwap ? 'text-blue-600' : ''
                     }`}
                     onClick={() => {
-                      if (showVagueLine) {
-                        setVaguePath("");
-                        setVagueArrowPath("");
+                      if (!vagueDraggable) {
+                        if (showVagueLine) {
+                          setVaguePath("");
+                          setVagueArrowPath("");
+                        }
+                        setShowVagueLine(!showVagueLine);
                       }
-                      setShowVagueLine(!showVagueLine);
                     }}
+                    {...(vagueDraggable ? {
+                      drag: true,
+                      dragMomentum: false,
+                      style: { cursor: 'grab', position: 'absolute', zIndex: 100 },
+                      whileDrag: { cursor: 'grabbing' }
+                    } : {})}
                     animate={
+                      vagueDraggable ? 
+                      { x: vagueDragPosition.x, y: vagueDragPosition.y } : 
                       startAttraction && !precisionCollided ? {
                         // Initial attraction - move toward precision
                         x: (originalPrecisionPosition.x - originalVaguePosition.x) + 100, // Collision point much further to the right
@@ -623,10 +686,24 @@ export default function IntroPage() {
                           type: "spring",
                           stiffness: 500,
                           damping: 30,
-                          duration: 0.6
+                          duration: 0.6,
+                          onComplete: () => {
+                            // When final positioning completes, capture this position as the initial drag position
+                            setVagueDragPosition({ 
+                              x: originalPrecisionPosition.x - originalVaguePosition.x, 
+                              y: 0 
+                            });
+                          }
                         }
                       } : {}
                     }
+                    onDragEnd={(e, info) => {
+                      // Update vagueness position after drag
+                      setVagueDragPosition({
+                        x: vagueDragPosition.x + info.offset.x,
+                        y: vagueDragPosition.y + info.offset.y
+                      });
+                    }}
                   >
                     Vagueness
                   </motion.div>
