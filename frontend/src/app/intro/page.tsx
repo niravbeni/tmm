@@ -102,6 +102,9 @@ export default function IntroPage() {
   // Add a state for meaning tilt - initialize with line rotation to match it
   const [meaningTilt, setTilt] = useState(lineRotation);
   
+  // Add state for color change when seesaw is balanced
+  const [lineBalanced, setLineBalanced] = useState(false);
+  
   // Function to calculate coordinates based on element positions
   const calculateCoordinates = () => {
     if (precisionRef.current && meaningRef.current && vagueRef.current && creativityRef.current) {
@@ -580,6 +583,8 @@ export default function IntroPage() {
           // Then settle to perfect horizontal
           setTimeout(() => {
             setLineRotation(0);
+            // When the line is balanced, change the color to purple
+            setLineBalanced(true);
             // No more seesaw animations after this
           }, 250);
         }, 150);
@@ -1479,7 +1484,8 @@ export default function IntroPage() {
                 className="w-full pointer-events-none"
                 style={{ 
                   height: '2px', 
-                  backgroundColor: 'black',
+                  backgroundColor: lineBalanced ? '#6B21A8' : 'black', // Darker purple when balanced
+                  transition: 'background-color 0.5s ease-in-out',
                   zIndex: 10
                 }}
               />
@@ -1491,6 +1497,8 @@ export default function IntroPage() {
                   style={{ 
                     left: `${contactPosition.left}px`,
                     top: `-25px`, 
+                    color: lineBalanced ? '#6B21A8' : 'inherit', // Darker purple when balanced
+                    transition: 'color 0.5s ease-in-out',
                     zIndex: 20,
                     transformOrigin: 'bottom center'
                   }}
@@ -1506,9 +1514,10 @@ export default function IntroPage() {
                   style={{ 
                     left: '37%', 
                     top: `-25px`, 
+                    color: lineBalanced ? '#6B21A8' : 'inherit', // Darker purple when balanced
                     zIndex: 20,
                     transformOrigin: 'bottom center',
-                    transition: 'all 0.1s ease-out' // Smooth any position adjustments
+                    transition: 'color 0.5s ease-in-out, all 0.1s ease-out' // Combined transitions
                   }}
                 >
                   Meaning
