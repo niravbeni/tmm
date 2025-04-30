@@ -140,20 +140,28 @@ a[aria-label="Vercel Logo"] {
 /* Selected card styling */
 .selected-card {
   border: 2px solid var(--button-bg);
-  transform: none;
+  transform: scale(1.05);
   box-sizing: border-box;
+  z-index: 30;
+  transition: transform 0.2s ease;
 }
 
 /* Desktop-only selected card styling */
 @media (min-width: 769px) {
   .md\:selected-card {
     border: 2px solid #000000 !important;
-    transform: none;
-    transition: none;
+    transform: scale(1.05) !important;
+    transition: transform 0.2s ease;
     outline: none;
-    z-index: 10;
+    z-index: 30;
     box-sizing: border-box;
     position: relative;
+  }
+  
+  /* Ensure selected cards don't get the hover effect */
+  .selected-card:hover,
+  .md\:selected-card:hover {
+    transform: scale(1.05) !important;
   }
 }
 
@@ -169,8 +177,15 @@ a[aria-label="Vercel Logo"] {
 .game-card {
   width: 160px;
   height: 235px;
-  transition: none;
+  transition: transform 0.2s ease;
   margin-bottom: 1rem;
+}
+
+@media (min-width: 769px) {
+  .game-card:hover {
+    transform: scale(1.02);
+    z-index: 20;
+  }
 }
 
 @media (min-width: 1024px) {
