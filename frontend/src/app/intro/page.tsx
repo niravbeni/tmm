@@ -110,6 +110,12 @@ export default function IntroPage() {
   const [gardensHighlighted, setGardensHighlighted] = useState(false);
   const [gardensErased, setGardensErased] = useState(false);
   
+  // Add ref for the title vagueness
+  const titleVagueRef = useRef<HTMLSpanElement>(null);
+  
+  // Add state for vagueness merging with title
+  const [vagueMergingWithTitle, setVagueMergingWithTitle] = useState(false);
+  
   // Function to calculate coordinates based on element positions
   const calculateCoordinates = () => {
     if (precisionRef.current && meaningRef.current && vagueRef.current && creativityRef.current) {
@@ -802,7 +808,11 @@ export default function IntroPage() {
 
           <div className="card p-8 mb-3 min-h-[92vh] flex flex-col">
             <h1 className="text-3xl font-bold text-center mb-1">Say Less.</h1>
-            <p className="text-base italic text-center mb-4">(A Game of Precision, Vagueness, and Communication)</p>
+            <p className="text-base italic text-center mb-4">
+              (A Game of Precision, <span ref={titleVagueRef} className={`${vagueMergingWithTitle ? 'text-purple-800 font-bold' : ''}`} style={{
+                transition: 'color 0.5s ease-out, font-weight 0.5s ease-out'
+              }}>Vagueness</span>, and Communication)
+            </p>
             
             {/* Diagram container with perfect spacing */}
             <div 
@@ -980,7 +990,11 @@ export default function IntroPage() {
                     } : {})}
                     animate={
                       vagueDraggable ? 
-                      { x: vagueDragPosition.x, y: vagueDragPosition.y } : 
+                      { 
+                        x: vagueMergingWithTitle ? 0 : vagueDragPosition.x, 
+                        y: vagueMergingWithTitle ? 0 : vagueDragPosition.y,
+                        opacity: vagueMergingWithTitle ? 0 : 1,
+                      } : 
                       startAttraction && !precisionCollided ? {
                         // Initial attraction - move toward precision
                         x: (originalPrecisionPosition.x - originalVaguePosition.x) + 100, // Collision point much further to the right
@@ -1026,6 +1040,53 @@ export default function IntroPage() {
                       setIsActivelyDragging(true);
                     }}
                     onDrag={(e, info) => {
+                      // Check for title overlap when dragging
+                      if (vagueRef.current && titleVagueRef.current && vagueDraggable && !vagueMergingWithTitle) {
+                        const vagueRect = vagueRef.current.getBoundingClientRect();
+                        const titleVagueRect = titleVagueRef.current.getBoundingClientRect();
+                        
+                        // Check overlap with title vagueness
+                        const overlapWithTitle = !(
+                          vagueRect.right < titleVagueRect.left || 
+                          vagueRect.left > titleVagueRect.right || 
+                          vagueRect.bottom < titleVagueRect.top || 
+                          vagueRect.top > titleVagueRect.bottom
+                        );
+                        
+                        if (overlapWithTitle) {
+                          // Start merge animation
+                          setVagueMergingWithTitle(true);
+                          
+                          // Animate the draggable vagueness to shrink and fade
+                          if (vagueRef.current) {
+                            // Setup transition
+                            vagueRef.current.style.transition = 'transform 0.6s ease-out, opacity 0.6s ease-out';
+                            // Animate to shrink into the title position
+                            const scaleX = titleVagueRect.width / vagueRect.width;
+                            const scaleY = titleVagueRect.height / vagueRect.height;
+                            const translateX = (titleVagueRect.left - vagueRect.left) + (titleVagueRect.width - vagueRect.width * scaleX) / 2;
+                            const translateY = (titleVagueRect.top - vagueRect.top) + (titleVagueRect.height - vagueRect.height * scaleY) / 2;
+                            
+                            // Apply the transform and fade out
+                            vagueRef.current.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+                            vagueRef.current.style.opacity = '0';
+                            
+                            // Highlight the title vagueness
+                            if (titleVagueRef.current) {
+                              titleVagueRef.current.classList.add('text-purple-800');
+                              titleVagueRef.current.classList.add('font-bold');
+                            }
+                            
+                            // After animation completes, hide the draggable element
+                            setTimeout(() => {
+                              if (vagueRef.current) {
+                                vagueRef.current.style.visibility = 'hidden';
+                              }
+                            }, 600);
+                          }
+                        }
+                      }
+                    
                       // Instead of updating React state on every frame (which causes jitter),
                       // only check for intersection here but don't update position state
                       
@@ -1051,18 +1112,31 @@ export default function IntroPage() {
                             
                             // Apply blur and fade effect before disappearing
                             if (gardensRef.current) {
-                              gardensRef.current.style.transition = 'opacity 0.6s ease-out, filter 0.6s ease-out, color 0.6s ease-out';
-                              gardensRef.current.style.filter = 'blur(5px)';
-                              gardensRef.current.style.opacity = '0.2';
-                              gardensRef.current.style.color = 'white';
+                              // Set up transitions for a smoother effect
+                              gardensRef.current.style.transition = 'opacity 0.8s ease-out, filter 0.8s ease-out, color 0.8s ease-out';
+                              // Apply a more subtle blur effect
+                              gardensRef.current.style.filter = 'blur(3px)';
+                              // Fade opacity more gradually
+                              gardensRef.current.style.opacity = '0.3';
+                              // Fade to a very light color (not pure white)
+                              gardensRef.current.style.color = 'rgba(255, 255, 255, 0.4)';
                               
-                              // Don't hide completely - keep the space
+                              // Don't hide completely - keep the space and create a subtle transition
                               setTimeout(() => {
                                 if (gardensRef.current) {
-                                  gardensRef.current.style.visibility = 'hidden';
-                                  // Keep the space by not changing display to none
+                                  // Further increase the blur and reduce opacity
+                                  gardensRef.current.style.filter = 'blur(5px)';
+                                  gardensRef.current.style.opacity = '0.15';
+                                  
+                                  // Further fade the color
+                                  setTimeout(() => {
+                                    if (gardensRef.current) {
+                                      gardensRef.current.style.opacity = '0.05';
+                                      gardensRef.current.style.filter = 'blur(8px)';
+                                    }
+                                  }, 300);
                                 }
-                              }, 600);
+                              }, 400);
                             }
                           }
                         }
@@ -1185,7 +1259,7 @@ export default function IntroPage() {
                                   setVagueLineErasing(false);
                                   setVagueLineBlur(0);
                                   setVagueLineOpacity(1); // Reset for next time
-                                }, 600); // Match the duration from the transition
+                                }, 600);
                               }, 50);
                             }
                           } else {
@@ -1248,7 +1322,7 @@ export default function IntroPage() {
                                     setPrecisionOpacity(0);
                                     setPrecisionBlur(8);
                                     // Don't reset the erasing state to prevent retriggering
-                                  }, 600); // Match the duration from the transition
+                                  }, 600);
                                 }
                               }, 50);
                             }
@@ -1612,11 +1686,10 @@ export default function IntroPage() {
               >
                 <p className="text-lg italic text-center mb-4">
                   "Poetry is the art of creating imaginary <span ref={gardensRef} style={{
-                    opacity: gardensErased ? 0.2 : 1,
-                    color: gardensErased ? 'white' : 'inherit',
-                    visibility: gardensErased ? 'hidden' : 'visible',
+                    opacity: gardensErased ? 0.3 : 1,
+                    color: gardensErased ? 'rgba(255, 255, 255, 0.4)' : 'inherit',
                     filter: gardensErased ? 'blur(5px)' : 'none',
-                    transition: 'opacity 0.6s ease-out, filter 0.6s ease-out, color 0.6s ease-out'
+                    transition: 'opacity 0.8s ease-out, filter 0.8s ease-out, color 0.8s ease-out'
                   }}>gardens</span> with real toads."
                 </p>
                 <p className="text-center" style={{ marginLeft: '150px', marginRight: '0px' }}>― Marianne Moore</p>
