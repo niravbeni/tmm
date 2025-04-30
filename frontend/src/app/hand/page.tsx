@@ -220,17 +220,13 @@ export default function HandPage() {
     return (
       <div
         key={card}
-        className="relative cursor-pointer p-2 md:p-3 clickable"
+        className="relative cursor-pointer clickable"
         onClick={() => setSelectedCard(index)}
       >
         <div 
           className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden ${
             selectedCard === index ? 'md:selected-card' : ''
           }`}
-          style={{
-            border: !isMobile && selectedCard === index ? '2px solid #000000' : 'none',
-            boxSizing: 'border-box'
-          }}
         >
           <Image
             src={`/cards/${card}`}
@@ -366,7 +362,11 @@ export default function HandPage() {
             ) : (
               // Desktop grid layout
               <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 mx-auto w-full place-items-center px-0">
-                {displayHand.map((card, index) => renderHandCard(card, index))}
+                {displayHand.map((card, index) => (
+                  <div key={card} className="p-3">
+                    {renderHandCard(card, index)}
+                  </div>
+                ))}
               </div>
             )}
           </div>

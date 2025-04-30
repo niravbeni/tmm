@@ -262,7 +262,7 @@ export default function VotePage() {
     return (
       <div 
         key={shuffledIndex} 
-        className="relative p-1 cursor-pointer clickable"
+        className="relative cursor-pointer clickable"
         onClick={() => {
           setSelectedCard(shuffledIndex);
         }}
@@ -271,10 +271,6 @@ export default function VotePage() {
           className={`game-card bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden ${
             isSelected ? 'selected-card' : ''
           }`}
-          style={{
-            border: isSelected ? '2px solid #000000' : 'none',
-            boxSizing: 'border-box'
-          }}
         >
           <Image
             src={`/cards/${playedCard.card}`}
@@ -386,7 +382,11 @@ export default function VotePage() {
               ) : (
                 // Desktop grid layout
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-3 mx-auto w-full place-items-center px-0 pb-4">
-                  {shuffledCards.map((cardItem, index) => renderCard(cardItem, index))}
+                  {shuffledCards.map((cardItem, index) => (
+                    <div key={index} className="p-3">
+                      {renderCard(cardItem, index)}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
