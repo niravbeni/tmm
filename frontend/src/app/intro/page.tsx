@@ -49,6 +49,17 @@ export default function IntroPage() {
   const [vagueDraggable, setVagueDraggable] = useState(false);
   const [vagueDragPosition, setVagueDragPosition] = useState({ x: 0, y: 0 });
   
+  // Track when vagueness is over the squiggly line
+  const [vagueLineErasing, setVagueLineErasing] = useState(false);
+  const [vagueLineOpacity, setVagueLineOpacity] = useState(1);
+  const [vagueLineBlur, setVagueLineBlur] = useState(0);
+  const [isActivelyDragging, setIsActivelyDragging] = useState(false);
+  
+  // Track when precision word is being erased
+  const [precisionErasing, setPrecisionErasing] = useState(false);
+  const [precisionOpacity, setPrecisionOpacity] = useState(1);
+  const [precisionBlur, setPrecisionBlur] = useState(0);
+  
   // References for container and elements
   const containerRef = useRef<HTMLDivElement>(null);
   const precisionRef = useRef<HTMLDivElement>(null);
@@ -472,6 +483,34 @@ export default function IntroPage() {
     }
   }, [vagueDraggable]);
 
+  // Reset vague line state when toggled
+  useEffect(() => {
+    if (showVagueLine) {
+      setVagueLineOpacity(1);
+      setVagueLineBlur(0);
+      setVagueLineErasing(false);
+    }
+  }, [showVagueLine]);
+
+  // Reset state when component unmounts
+  useEffect(() => {
+    return () => {
+      setVagueDragPosition({ x: 0, y: 0 });
+      setPrecisionOpacity(1);
+      setPrecisionBlur(0);
+      setPrecisionErasing(false);
+    };
+  }, []);
+
+  // Reset precision word state if clicked again
+  useEffect(() => {
+    if (precisionClicks === 0) {
+      setPrecisionOpacity(1);
+      setPrecisionBlur(0);
+      setPrecisionErasing(false);
+    }
+  }, [precisionClicks]);
+
   return (
     <MobileDetector>
       <main className="flex flex-col h-full no-scroll">
@@ -557,7 +596,11 @@ export default function IntroPage() {
                       strokeLinejoin="round"
                       fill="transparent"
                       initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
+                      animate={{ 
+                        pathLength: 1,
+                        opacity: vagueLineOpacity,
+                        filter: `blur(${vagueLineBlur}px)` 
+                      }}
                       transition={{ 
                         duration: 2.5, 
                         ease: [0.25, 0.1, 0.25, 1] // Custom cubic bezier for smoother flow
@@ -573,7 +616,10 @@ export default function IntroPage() {
                       strokeLinejoin="round"
                       fill="transparent"
                       initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      animate={{ 
+                        opacity: vagueLineOpacity,
+                        filter: `blur(${vagueLineBlur}px)`
+                      }}
                       transition={{ 
                         delay: 2.4, 
                         duration: 0.3,
@@ -625,6 +671,17 @@ export default function IntroPage() {
                           damping: 20,
                           duration: 0.4
                         }
+                      } : precisionErasing ? {
+                        // Let the CSS transition handle the visual effects
+                        // This is just to update the React state
+                        opacity: precisionOpacity,
+                        filter: `blur(${precisionBlur}px)`,
+                      } : {}
+                    }
+                    style={
+                      precisionErasing ? {
+                        opacity: precisionOpacity,
+                        filter: `blur(${precisionBlur}px)`,
                       } : {}
                     }
                   >
@@ -646,6 +703,8 @@ export default function IntroPage() {
                           setVagueArrowPath("");
                         }
                         setShowVagueLine(!showVagueLine);
+                        // Reset opacity when toggling
+                        setVagueLineOpacity(1);
                       }
                     }}
                     {...(vagueDraggable ? {
@@ -697,12 +756,215 @@ export default function IntroPage() {
                         }
                       } : {}
                     }
+                    onDragStart={() => {
+                      console.log("Drag started");
+                      setIsActivelyDragging(true);
+                    }}
+                    onDrag={(e, info) => {
+                      // Instead of updating React state on every frame (which causes jitter),
+                      // only check for intersection here but don't update position state
+                      
+                      // Get current element positions for intersection check
+                      if (vagueRef.current && vagueDraggable) {
+                        const vagueRect = vagueRef.current.getBoundingClientRect();
+                        
+                        // Check for vague line overlap if it's visible and not already erasing
+                        if (showVagueLine && !vagueLineErasing) {
+                          console.log("Checking for vague line overlap");
+                          
+                          // Get ONLY the squiggly line path elements by checking if they're for the vague line
+                          const allPaths = document.querySelectorAll('svg.absolute path');
+                          // Use a different approach to identify the vague paths - since we know vague line is more complex
+                          // and has a longer path string. Precision line has a straight path like "M x y L x y"
+                          
+                          // Find the vague path specifically
+                          const vaguePaths: SVGPathElement[] = [];
+                          allPaths.forEach(path => {
+                            const pathD = path.getAttribute('d') || '';
+                            // Need to distinguish between precision arrow and vague arrow
+                            // Both have two L commands but vague path is more complex
+                            
+                            // Get stroke color to help identify which line (precision vs vague)
+                            const strokeColor = path.getAttribute('stroke') || '';
+                            
+                            // For debugging
+                            console.log(`Path with stroke ${strokeColor}, d=${pathD.substring(0, 30)}...`);
+                            
+                            // Check if this is part of the VAGUE line (right side)
+                            // 1. Either it's the main squiggly path (has curve commands)
+                            // 2. Or it's the vague arrow (has 2 L commands AND is associated with vague line)
+                            // The vague line never has red stroke (red is only for precision during animation)
+                            const isVaguePath = pathD.includes('C ');
+                            const isVagueArrow = pathD.startsWith('M ') && 
+                                               pathD.match(/L /g)?.length === 2 && 
+                                               !pathD.includes('C ') &&
+                                               vagueCoords.end.x > 0 &&
+                                               // Check if this path matches the vague arrow path
+                                               pathD === vagueArrowPath.replace(/\s+/g, ' ').trim();
+                            
+                            if (isVaguePath || isVagueArrow) {
+                              vaguePaths.push(path as SVGPathElement);
+                              console.log(`Found vague ${isVaguePath ? 'path' : 'arrow'}: ${pathD.substring(0, 30)}...`);
+                            } else {
+                              console.log("Skipping non-vague path");
+                            }
+                          });
+                          
+                          if (vaguePaths.length > 0) {
+                            console.log(`Found ${vaguePaths.length} vague line paths`);
+                            
+                            // Check overlap with any vague path
+                            let foundIntersection = false;
+                            
+                            // Log the bounds for debugging if there's at least one vague path
+                            const firstPathRect = vaguePaths[0].getBoundingClientRect();
+                            console.log(`Vague path bounds: L:${firstPathRect.left} R:${firstPathRect.right} T:${firstPathRect.top} B:${firstPathRect.bottom}`);
+                            console.log(`Vague text bounds: L:${vagueRect.left} R:${vagueRect.right} T:${vagueRect.top} B:${vagueRect.bottom}`);
+                            
+                            // Simple box intersection check first
+                            vaguePaths.forEach((path, i) => {
+                              const pathRect = path.getBoundingClientRect();
+                              
+                              // Simple intersection test
+                              const overlap = !(
+                                vagueRect.right < pathRect.left || 
+                                vagueRect.left > pathRect.right || 
+                                vagueRect.bottom < pathRect.top || 
+                                vagueRect.top > pathRect.bottom
+                              );
+                              
+                              if (overlap) {
+                                console.log(`Overlap detected with vague path ${i}`);
+                                foundIntersection = true;
+                              }
+                            });
+                            
+                            // If any overlap is found and not already erasing, start the fade out
+                            if (foundIntersection) {
+                              console.log("INTERSECTION FOUND - Starting erase effect for vague paths only");
+                              setVagueLineErasing(true);
+                              
+                              // Directly manipulate only the vague paths
+                              vaguePaths.forEach(pathElement => {
+                                // Store the original properties
+                                if (!pathElement.dataset.originalStroke) {
+                                  pathElement.dataset.originalStroke = pathElement.getAttribute('stroke') || '';
+                                  pathElement.dataset.originalStrokeWidth = pathElement.getAttribute('stroke-width') || '';
+                                }
+                              });
+                              
+                              // Use direct animation instead of React state
+                              let opacity = 1;
+                              let blur = 0;
+                              
+                              // First, make sure all paths have the same initial state
+                              vaguePaths.forEach(pathElement => {
+                                pathElement.style.opacity = '1';
+                                pathElement.style.filter = 'blur(0px)';
+                                pathElement.style.transition = 'opacity 0.6s ease-out, filter 0.6s ease-out';
+                              });
+                              
+                              // Short delay to ensure CSS transition is applied
+                              setTimeout(() => {
+                                // Apply the fade to all paths simultaneously
+                                vaguePaths.forEach(pathElement => {
+                                  pathElement.style.opacity = '0';
+                                  pathElement.style.filter = 'blur(8px)';
+                                });
+                                
+                                // After the transition completes
+                                setTimeout(() => {
+                                  console.log("Fade complete, hiding all vague paths");
+                                  
+                                  // Hide all vague paths
+                                  vaguePaths.forEach(pathElement => {
+                                    pathElement.style.display = 'none';
+                                  });
+                                  
+                                  // Update React state after animation is complete
+                                  setShowVagueLine(false);
+                                  setVagueLineErasing(false);
+                                  setVagueLineBlur(0);
+                                  setVagueLineOpacity(1); // Reset for next time
+                                }, 600); // Match the duration from the transition
+                              }, 50);
+                            }
+                          } else {
+                            console.log("No vague paths found");
+                          }
+                        }
+                        
+                        // Check for overlap with precision word if it's not already being erased
+                        if (!precisionErasing && precisionRef.current) {
+                          console.log("Checking for precision word overlap");
+                          
+                          const precisionRect = precisionRef.current.getBoundingClientRect();
+                          
+                          // Calculate centers of both elements
+                          const vagueCenterX = vagueRect.left + vagueRect.width / 2;
+                          const vagueCenterY = vagueRect.top + vagueRect.height / 2;
+                          
+                          const precisionCenterX = precisionRect.left + precisionRect.width / 2;
+                          const precisionCenterY = precisionRect.top + precisionRect.height / 2;
+                          
+                          // Calculate distance between centers
+                          const distance = Math.sqrt(
+                            Math.pow(vagueCenterX - precisionCenterX, 2) + 
+                            Math.pow(vagueCenterY - precisionCenterY, 2)
+                          );
+                          
+                          // Define an overlap threshold distance (roughly half the word width)
+                          const overlapThreshold = precisionRect.width * 0.6;
+                          
+                          // Log distance for debugging
+                          console.log(`Distance to precision: ${distance}, threshold: ${overlapThreshold}`);
+                          
+                          // Check if centers are close enough to be considered overlapping
+                          if (distance < overlapThreshold) {
+                            console.log("PRECISION OVERLAP DETECTED - Starting erase effect");
+                            setPrecisionErasing(true);
+                            
+                            // Get the precision element for direct manipulation
+                            if (precisionRef.current) {
+                              // Set up transition
+                              precisionRef.current.style.transition = 'opacity 0.6s ease-out, filter 0.6s ease-out';
+                              
+                              // Short delay to ensure CSS transition is applied
+                              setTimeout(() => {
+                                // Apply the fade
+                                if (precisionRef.current) {
+                                  precisionRef.current.style.opacity = '0';
+                                  precisionRef.current.style.filter = 'blur(8px)';
+                                  
+                                  // After the transition completes
+                                  setTimeout(() => {
+                                    console.log("Precision fade complete, hiding word");
+                                    
+                                    // Hide precision word
+                                    if (precisionRef.current) {
+                                      precisionRef.current.style.visibility = 'hidden';
+                                    }
+                                    
+                                    // Update React state
+                                    setPrecisionOpacity(0);
+                                    setPrecisionBlur(8);
+                                    // Don't reset the erasing state to prevent retriggering
+                                  }, 600); // Match the duration from the transition
+                                }
+                              }, 50);
+                            }
+                          }
+                        }
+                      }
+                    }}
                     onDragEnd={(e, info) => {
-                      // Update vagueness position after drag
+                      console.log("Drag ended");
+                      // Only update position state at the end of drag
                       setVagueDragPosition({
                         x: vagueDragPosition.x + info.offset.x,
                         y: vagueDragPosition.y + info.offset.y
                       });
+                      setIsActivelyDragging(false);
                     }}
                   >
                     Vagueness
