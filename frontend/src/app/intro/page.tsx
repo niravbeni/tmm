@@ -30,10 +30,28 @@ export default function IntroPage() {
   const [creativityStartTime, setCreativityStartTime] = useState(0);
   const [creativityPauseTime, setCreativityPauseTime] = useState(0);
   
+  // State for line rotation
+  const [lineRotated, setLineRotated] = useState(false);
+  const [lineRotation, setLineRotation] = useState(0);
+  const [creativityTouchedLine, setCreativityTouchedLine] = useState(false);
+  const [creativityLockedToLine, setCreativityLockedToLine] = useState(false);
+  const [lineBottom, setLineBottom] = useState(0);
+  const [lineCenter, setLineCenter] = useState({ x: 0, y: 0 });
+  const [creativityOffsetX, setCreativityOffsetX] = useState(0);
+  const [creativityInitialRight, setCreativityInitialRight] = useState(0);
+  const [creativityLeftPosition, setCreativityLeftPosition] = useState(0);
+  
+  // Position tracking for exact placement
+  const [contactPosition, setContactPosition] = useState({ left: 0, top: 0 });
+  const [seesaw, setSeesaw] = useState(false);
+  
+  // References for container and elements
+  const containerRef = useRef<HTMLDivElement>(null);
   const precisionRef = useRef<HTMLDivElement>(null);
   const meaningRef = useRef<HTMLDivElement>(null);
   const vagueRef = useRef<HTMLDivElement>(null);
   const creativityRef = useRef<HTMLDivElement>(null);
+  const horizontalLineRef = useRef<HTMLDivElement>(null);
   
   const [precisionCoords, setPrecisionCoords] = useState({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
   const [vagueCoords, setVagueCoords] = useState({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
@@ -41,6 +59,7 @@ export default function IntroPage() {
   // Store original positions for animation
   const [originalPrecisionPosition, setOriginalPrecisionPosition] = useState({ x: 0, y: 0 });
   const [originalVaguePosition, setOriginalVaguePosition] = useState({ x: 0, y: 0 });
+  const [originalCreativityPosition, setOriginalCreativityPosition] = useState({ x: 0, y: 0 });
   
   // Store vague path to prevent it from changing when precision is toggled
   const [vaguePath, setVaguePath] = useState("");
@@ -123,7 +142,19 @@ export default function IntroPage() {
   // Calculate the positions of the words when component mounts and on resize
   useEffect(() => {
     // Delay the calculation to ensure DOM is fully rendered
-    const timer = setTimeout(calculateCoordinates, 100);
+    const timer = setTimeout(() => {
+      calculateCoordinates();
+      
+      // Also capture the horizontal line's position
+      if (horizontalLineRef.current) {
+        const lineRect = horizontalLineRef.current.getBoundingClientRect();
+        setLineBottom(lineRect.top);
+        setLineCenter({ 
+          x: lineRect.left + lineRect.width / 2, 
+          y: lineRect.top + lineRect.height / 2 
+        });
+      }
+    }, 100);
     
     // Add resize event listener with debounce for better performance
     let resizeTimeout: NodeJS.Timeout;
@@ -189,12 +220,59 @@ export default function IntroPage() {
     return (elapsedTime / totalDuration) * totalDistance;
   };
   
-  // Update creativity position
+  // Update creativity position and check for collision with horizontal line
   useEffect(() => {
-    if (!startCreativityFloat || creativityFrozen) return;
+    if (!startCreativityFloat || creativityFrozen || creativityTouchedLine) return;
     
     const updatePosition = () => {
-      setCreativityPosition(calculateCreativityPosition());
+      const newPosition = calculateCreativityPosition();
+      setCreativityPosition(newPosition);
+      
+      // Check if creativity has touched the horizontal line
+      if (horizontalLineRef.current && creativityRef.current && containerRef.current && !creativityTouchedLine) {
+        const lineRect = horizontalLineRef.current.getBoundingClientRect();
+        const creativityRect = creativityRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        
+        // Store line position for reference
+        if (lineBottom === 0) {
+          setLineBottom(lineRect.top);
+          setLineCenter({ 
+            x: lineRect.left + lineRect.width / 2, 
+            y: lineRect.top + lineRect.height / 2 
+          });
+        }
+        
+        // Check if the bottom of creativity has reached the top of the line
+        if (creativityRect.bottom >= lineRect.top) {
+          // Save exact position relative to the container
+          setContactPosition({ 
+            left: creativityRect.left - containerRect.left, 
+            top: creativityRect.top - containerRect.top
+          });
+          
+          // First freeze everything in place
+          setCreativityTouchedLine(true);
+          setCreativityFrozen(true);
+          
+          // Short delay before showing the locked creativity to ensure no visual jump
+          setTimeout(() => {
+            setCreativityLockedToLine(true);
+            
+            // Add see-saw physics effect with a subtle shake before rotation
+            setSeesaw(true);
+            
+            // Sequence the animations
+            setTimeout(() => {
+              setSeesaw(false);
+              // Small delay after shake before rotating
+              setTimeout(() => {
+                setLineRotation(5);
+              }, 200);
+            }, 600); // Shake for 600ms
+          }, 50);
+        }
+      }
     };
     
     const intervalId = setInterval(updatePosition, 16); // ~60fps
@@ -202,7 +280,7 @@ export default function IntroPage() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [startCreativityFloat, creativityFrozen]);
+  }, [startCreativityFloat, creativityFrozen, creativityTouchedLine, lineBottom]);
   
   // Reset everything on third click
   const handlePrecisionClick = () => {
@@ -330,6 +408,17 @@ export default function IntroPage() {
     return { pathString, arrowPath };
   };
 
+  // Calculate original positions including creativity
+  useEffect(() => {
+    if (creativityRef.current) {
+      const creativityRect = creativityRef.current.getBoundingClientRect();
+      setOriginalCreativityPosition({
+        x: creativityRect.left + creativityRect.width / 2,
+        y: creativityRect.top + creativityRect.height / 2
+      });
+    }
+  }, []);
+
   return (
     <MobileDetector>
       <main className="flex flex-col h-full no-scroll">
@@ -359,7 +448,10 @@ export default function IntroPage() {
             <p className="text-base italic text-center mb-4">(A Game of Precision, Vagueness, and Communication)</p>
             
             {/* Diagram container with perfect spacing */}
-            <div className="flex flex-col items-center justify-center mt-12 relative flex-grow">
+            <div 
+              ref={containerRef}
+              className="flex flex-col items-center justify-center mt-12 relative flex-grow"
+            >
               {/* SVG container for both lines - positioned behind text with lower z-index */}
               <svg
                 className="absolute top-0 left-0 w-full h-full pointer-events-none"
@@ -549,48 +641,97 @@ export default function IntroPage() {
                   </div>
                 </div>
                 <div className="flex justify-center">
-                  <motion.div 
-                    ref={creativityRef} 
-                    className="text-xl font-semibold cursor-pointer"
-                    style={{ y: creativityPosition }}
-                    onPointerDown={() => {
-                      if (startCreativityFloat) {
-                        setCreativityFrozen(true);
-                        setCreativityPauseTime(Date.now());
-                      }
-                    }}
-                    onPointerUp={() => {
-                      if (startCreativityFloat && creativityFrozen) {
-                        setCreativityFrozen(false);
-                        // Update the start time to resume animation from current position
-                        setCreativityStartTime(prev => Date.now() - (creativityPauseTime - prev));
-                      }
-                    }}
-                    onPointerLeave={() => {
-                      if (startCreativityFloat && creativityFrozen) {
-                        setCreativityFrozen(false);
-                        // Update the start time to resume animation from current position
-                        setCreativityStartTime(prev => Date.now() - (creativityPauseTime - prev));
-                      }
-                    }}
-                  >
-                    Creativity
-                  </motion.div>
+                  {!creativityLockedToLine && (
+                    <motion.div 
+                      ref={creativityRef} 
+                      className="text-xl font-semibold cursor-pointer"
+                      style={{ y: creativityPosition }}
+                      onPointerDown={() => {
+                        if (startCreativityFloat && !creativityTouchedLine) {
+                          setCreativityFrozen(true);
+                          setCreativityPauseTime(Date.now());
+                        }
+                      }}
+                      onPointerUp={() => {
+                        if (startCreativityFloat && creativityFrozen && !creativityTouchedLine) {
+                          setCreativityFrozen(false);
+                          // Update the start time to resume animation from current position
+                          setCreativityStartTime(prev => Date.now() - (creativityPauseTime - prev));
+                        }
+                      }}
+                      onPointerLeave={() => {
+                        if (startCreativityFloat && creativityFrozen && !creativityTouchedLine) {
+                          setCreativityFrozen(false);
+                          // Update the start time to resume animation from current position
+                          setCreativityStartTime(prev => Date.now() - (creativityPauseTime - prev));
+                        }
+                      }}
+                    >
+                      Creativity
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </div>
             
-            {/* Full-width horizontal line positioned at appropriate height */}
-            <div 
-              className="w-full pointer-events-none mt-auto"
+            {/* Line and Creativity container that rotate together */}
+            <motion.div 
+              className="w-full mt-auto relative"
               style={{ 
-                height: '2px', 
-                backgroundColor: 'black',
                 marginTop: '180px',
                 marginBottom: '120px',
-                zIndex: 10 
+                height: '2px',
+                transformOrigin: 'center'
               }}
-            />
+              animate={
+                seesaw 
+                  ? {
+                      rotateZ: [0, -1, 1, -0.5, 0.5, 0], // Subtle shake effect
+                    }
+                  : { rotateZ: lineRotation }
+              }
+              transition={
+                seesaw
+                  ? {
+                      duration: 0.6,
+                      ease: "easeInOut",
+                      times: [0, 0.2, 0.4, 0.6, 0.8, 1]
+                    }
+                  : { 
+                      type: 'spring', 
+                      damping: 15, // Less damping for more natural oscillation
+                      stiffness: 60, // Lower stiffness for softer movement
+                      mass: 1.5,    // More mass for more physics-like movement
+                      duration: 2
+                    }
+              }
+            >
+              {/* The horizontal line */}
+              <div 
+                ref={horizontalLineRef}
+                className="w-full pointer-events-none"
+                style={{ 
+                  height: '2px', 
+                  backgroundColor: 'black',
+                  zIndex: 10
+                }}
+              />
+              
+              {/* Creativity word attached to the line */}
+              {creativityLockedToLine && (
+                <div 
+                  className="text-xl font-semibold absolute"
+                  style={{ 
+                    left: `${contactPosition.left}px`,
+                    top: `-25px`, 
+                    zIndex: 20,
+                    transformOrigin: 'bottom center'
+                  }}
+                >
+                  Creativity
+                </div>
+              )}
+            </motion.div>
           </div>
         </div>
       </main>
