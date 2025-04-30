@@ -116,6 +116,9 @@ export default function IntroPage() {
   // Add state for vagueness merging with title
   const [vagueMergingWithTitle, setVagueMergingWithTitle] = useState(false);
   
+  // Add state to store meaning's original horizontal position
+  const [meaningHorizontalPosition, setMeaningHorizontalPosition] = useState({ left: '37%' });
+  
   // Function to calculate coordinates based on element positions
   const calculateCoordinates = () => {
     if (precisionRef.current && meaningRef.current && vagueRef.current && creativityRef.current) {
@@ -204,6 +207,14 @@ export default function IntroPage() {
           x: lineRect.left + lineRect.width / 2, 
           y: lineRect.top + lineRect.height / 2 
         });
+      }
+      
+      // Calculate the position for meaning to ensure it's centered
+      if (meaningRef.current && containerRef.current) {
+        const meaningRect = meaningRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const leftPosition = ((meaningRect.left - containerRect.left) / containerRect.width) * 100;
+        setMeaningHorizontalPosition({ left: `${leftPosition}%` });
       }
     }, 100);
     
@@ -554,9 +565,14 @@ export default function IntroPage() {
     const totalDistance = 400;
     const startTime = Date.now();
     
+    // Get exact positions for meaning and line
     const lineY = horizontalLineRef.current?.getBoundingClientRect().top || 0;
     const meaningY = meaningRef.current?.getBoundingClientRect().top || 0;
     const distanceToLine = lineY - meaningY - 10;
+    
+    // Store original meaning position
+    const meaningRect = meaningRef.current?.getBoundingClientRect();
+    const containerRect = containerRef.current?.getBoundingClientRect();
     
     // Start with a tilt matching line rotation
     const initialTilt = lineRotation;
@@ -1625,12 +1641,12 @@ export default function IntroPage() {
                 <div 
                   className="text-xl font-semibold absolute"
                   style={{ 
-                    left: '37%', 
+                    left: meaningHorizontalPosition.left, 
                     top: `-25px`, 
                     color: lineBalanced ? '#6B21A8' : 'inherit', // Darker purple when balanced
                     zIndex: 20,
                     transformOrigin: 'bottom center',
-                    transition: 'color 0.5s ease-in-out, all 0.1s ease-out' // Combined transitions
+                    transition: 'color 0.5s ease-out, all 0.1s ease-out' // Combined transitions
                   }}
                 >
                   Meaning
