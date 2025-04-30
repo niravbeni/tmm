@@ -60,6 +60,22 @@ export default function IntroPage() {
   const [precisionOpacity, setPrecisionOpacity] = useState(1);
   const [precisionBlur, setPrecisionBlur] = useState(0);
   
+  // Track precision line erasing and meaning falling
+  const [precisionLineErasing, setPrecisionLineErasing] = useState(false);
+  const [meaningFalling, setMeaningFalling] = useState(false);
+  const [meaningPosition, setMeaningPosition] = useState(0);
+  const [meaningVisible, setMeaningVisible] = useState(true);
+  const [lineBroken, setLineBroken] = useState(false);
+  
+  // Quote reveal
+  const [quoteVisible, setQuoteVisible] = useState(false);
+  
+  // Line halves falling
+  const [lineHalvesFalling, setLineHalvesFalling] = useState(false);
+  const [lineTopHalfPosition, setLineTopHalfPosition] = useState(0);
+  const [lineBottomHalfPosition, setLineBottomHalfPosition] = useState(0);
+  const [lineHalvesRotation, setLineHalvesRotation] = useState({ top: 0, bottom: 0 });
+  
   // References for container and elements
   const containerRef = useRef<HTMLDivElement>(null);
   const precisionRef = useRef<HTMLDivElement>(null);
@@ -79,6 +95,12 @@ export default function IntroPage() {
   // Store vague path to prevent it from changing when precision is toggled
   const [vaguePath, setVaguePath] = useState("");
   const [vagueArrowPath, setVagueArrowPath] = useState("");
+  
+  // Add a state for tracking meaning attachment
+  const [hasLatchedToLine, setHasLatchedToLine] = useState(false);
+  
+  // Add a state for meaning tilt - initialize with line rotation to match it
+  const [meaningTilt, setTilt] = useState(lineRotation);
   
   // Function to calculate coordinates based on element positions
   const calculateCoordinates = () => {
@@ -437,9 +459,7 @@ export default function IntroPage() {
     const arrowRightY = end.y - arrowSize * Math.sin(angle + Math.PI/6);
     
     // Create the arrow path with the calculated angle
-    const arrowPath = `M ${arrowLeftX} ${arrowLeftY} 
-                        L ${end.x} ${end.y} 
-                        L ${arrowRightX} ${arrowRightY}`;
+    const arrowPath = `M ${arrowLeftX} ${arrowLeftY} L ${end.x} ${end.y} L ${arrowRightX} ${arrowRightY}`;
     
     return { pathString, arrowPath };
   };
@@ -510,6 +530,241 @@ export default function IntroPage() {
       setPrecisionErasing(false);
     }
   }, [precisionClicks]);
+
+  // Simplify seesaw animation - only happens once when meaning lands
+  useEffect(() => {
+    if (!meaningFalling) return;
+    
+    // Further reduced duration for faster falling
+    const totalDuration = 2000;
+    const totalDistance = 400;
+    const startTime = Date.now();
+    
+    const lineY = horizontalLineRef.current?.getBoundingClientRect().top || 0;
+    const meaningY = meaningRef.current?.getBoundingClientRect().top || 0;
+    const distanceToLine = lineY - meaningY - 10;
+    
+    // Start with a tilt matching line rotation
+    const initialTilt = lineRotation;
+    
+    const fallInterval = setInterval(() => {
+      if (hasLatchedToLine) return;
+      
+      const elapsedTime = Date.now() - startTime;
+      const progress = Math.min(elapsedTime / totalDuration, 1);
+      const easedProgress = progress * progress * (3 - 2 * progress);
+      
+      const fallPosition = easedProgress * totalDistance;
+      
+      // Gradually reduce tilt
+      if (progress < 0.8) {
+        const currentTilt = initialTilt * (1 - progress / 0.8);
+        setTilt(currentTilt);
+      } else {
+        setTilt(0);
+      }
+      
+      // Check if meaning has reached the line
+      if (fallPosition >= distanceToLine) {
+        setHasLatchedToLine(true);
+        
+        // ONE-TIME seesaw animation sequence
+        // First impact - exaggerate rotation
+        setLineRotation(lineRotation + 2);
+        
+        // Then single rebalance
+        setTimeout(() => {
+          // Return to neutral with one clean motion
+          setLineRotation(-1); // Just a tiny overshoot in the other direction
+          
+          // Then settle to perfect horizontal
+          setTimeout(() => {
+            setLineRotation(0);
+            // No more seesaw animations after this
+          }, 250);
+        }, 150);
+      } else {
+        setMeaningPosition(fallPosition);
+      }
+      
+      if (progress >= 1 && !hasLatchedToLine) {
+        clearInterval(fallInterval);
+      }
+    }, 16);
+    
+    return () => clearInterval(fallInterval);
+  }, [meaningFalling, hasLatchedToLine, lineRotation]);
+
+  // Make sure the arrow is completely removed when the lines break
+  useEffect(() => {
+    if (!precisionLineErasing) return;
+    
+    // Delay slightly to let the DOM update
+    setTimeout(() => {
+      // Find any arrows on the page that aren't in the bottom group
+      const svgContainer = document.querySelector('svg.absolute');
+      if (!svgContainer) return;
+      
+      // Get all arrow elements
+      const allArrows = svgContainer.querySelectorAll('path.precision-line-arrow');
+      
+      // Get the bottom group if it exists
+      const elements = (document as any).lineHalfElements || {};
+      const bottomHalf = elements.bottomHalf;
+      
+      // Remove any arrow that isn't a child of the bottom group
+      allArrows.forEach(arrow => {
+        if (!bottomHalf || arrow.parentNode !== bottomHalf) {
+          console.log("Removing stray arrow element");
+          if (arrow.parentNode) {
+            arrow.parentNode.removeChild(arrow);
+          }
+        }
+      });
+      
+      // Delete any original precision line arrows
+      const allPaths = svgContainer.querySelectorAll('path');
+      allPaths.forEach(path => {
+        const d = path.getAttribute('d') || '';
+        // Identify arrow paths by their characteristics
+        const isArrowPath = d.includes('M') && d.includes('L') && 
+                           !d.includes('C') && // Not a curve
+                           (d.match(/L/g) || []).length === 2; // Exactly 2 line segments
+        const stroke = path.getAttribute('stroke') || '';
+        const isArrowStroke = stroke === '#3b82f6' || stroke === '#dc2626'; // Blue or red
+        
+        // If it looks like an arrow and isn't in the bottom group, remove it
+        if (isArrowPath && isArrowStroke && (!bottomHalf || path.parentNode !== bottomHalf)) {
+          console.log("Removing original arrow path");
+          if (path.parentNode) {
+            path.parentNode.removeChild(path);
+          }
+        }
+      });
+    }, 10);
+  }, [precisionLineErasing]);
+
+  // Update the line falling animation to GUARANTEE arrow removal
+  useEffect(() => {
+    if (!lineHalvesFalling) return;
+    
+    // Find and remove ALL arrow elements that aren't in the group
+    const removeStrayArrows = () => {
+      const svgContainer = document.querySelector('svg.absolute');
+      if (!svgContainer) return;
+      
+      // Get all paths in the SVG
+      const allPaths = svgContainer.querySelectorAll('path');
+      
+      // Get the bottom group if it exists
+      const elements = (document as any).lineHalfElements || {};
+      const bottomHalf = elements.bottomHalf;
+      
+      // Check each path to see if it matches the arrow parameters or looks like an arrow
+      allPaths.forEach(path => {
+        const d = path.getAttribute('d') || '';
+        const isArrowPath = d.includes('M') && d.includes('L') && 
+                           !d.includes('C') && // Not a curve
+                           (d.match(/L/g) || []).length >= 2; // At least 2 line segments
+        const isInBottomGroup = bottomHalf && path.parentNode === bottomHalf;
+        
+        // If it's an arrow-like path but not in the bottom group, remove it
+        if (isArrowPath && !isInBottomGroup) {
+          console.log("Removing stray arrow-like path");
+          if (path.parentNode) {
+            path.parentNode.removeChild(path);
+          }
+        }
+      });
+    };
+    
+    // Run multiple times to catch timing issues
+    removeStrayArrows();
+    const timers = [
+      setTimeout(removeStrayArrows, 50),
+      setTimeout(removeStrayArrows, 150),
+      setTimeout(removeStrayArrows, 300)
+    ];
+    
+    // Normal animation code
+    const elements = (document as any).lineHalfElements;
+    if (!elements) return;
+    
+    const { topHalf, bottomHalf } = elements;
+    
+    // Save origins
+    const topOrigin = topHalf?.style.transformOrigin;
+    const bottomOrigin = bottomHalf?.style.transformOrigin;
+    
+    let topFallPosition = 0;
+    let bottomFallPosition = 0;
+    let topFallSpeed = 1;
+    let bottomFallSpeed = 2;
+    let topRotation = 0;
+    let bottomRotation = 0;
+    const maxFall = 600;
+    
+    // Animation loop
+    const animate = () => {
+      topFallPosition += topFallSpeed;
+      topFallSpeed += 0.3;
+      topRotation -= 3;
+      
+      bottomFallPosition += bottomFallSpeed;
+      bottomFallSpeed += 0.4;
+      bottomRotation += 4;
+      
+      if (topHalf) {
+        topHalf.style.transform = `translateY(${topFallPosition}px) rotate(${topRotation}deg)`;
+      }
+      
+      if (bottomHalf) {
+        bottomHalf.style.transform = `translateY(${bottomFallPosition}px) rotate(${bottomRotation}deg)`;
+      }
+      
+      setLineTopHalfPosition(topFallPosition);
+      setLineBottomHalfPosition(bottomFallPosition);
+      setLineHalvesRotation({
+        top: topRotation,
+        bottom: bottomRotation
+      });
+      
+      if (bottomFallPosition >= maxFall) {
+        if (topHalf?.parentNode) topHalf.parentNode.removeChild(topHalf);
+        if (bottomHalf?.parentNode) bottomHalf.parentNode.removeChild(bottomHalf);
+        
+        // One final check to remove any stray arrows
+        removeStrayArrows();
+        
+        // Store the center point for quote positioning
+        const midPoint = {
+          x: parseFloat(topOrigin?.split('px')[0] || '0'),
+          y: parseFloat(topOrigin?.split('px')[1] || '0') + 100 // Add offset for quote
+        };
+        (document as any).brokenLineMidPoint = midPoint;
+        
+        setTimeout(() => setQuoteVisible(true), 100);
+        return;
+      }
+      
+      requestAnimationFrame(animate);
+    };
+    
+    const animationId = requestAnimationFrame(animate);
+    
+    return () => {
+      cancelAnimationFrame(animationId);
+      timers.forEach(clearTimeout);
+    };
+  }, [lineHalvesFalling]);
+
+  // In the useEffect, set the initialTilt from current line rotation when meaning starts falling
+  useEffect(() => {
+    if (meaningFalling) {
+      // Reset tilt to match current line rotation when meaning starts falling
+      setTilt(lineRotation);
+    }
+  }, [meaningFalling, lineRotation]);
 
   return (
     <MobileDetector>
@@ -955,6 +1210,169 @@ export default function IntroPage() {
                             }
                           }
                         }
+                        
+                        // Check for overlap with precision line (left blue line) if not already erasing
+                        if (showPrecisionLine && !precisionLineErasing && !lineBroken) {
+                          console.log("Checking for precision line overlap");
+                          
+                          // Get the precision line path elements by checking if they have straight paths
+                          const allPaths = document.querySelectorAll('svg.absolute path');
+                          const precisionPaths: SVGPathElement[] = [];
+                          
+                          allPaths.forEach(path => {
+                            const pathD = path.getAttribute('d') || '';
+                            // Precision paths are straight lines (no C commands, just M and L)
+                            // and they should NOT be the vague path or arrow
+                            if (!pathD.includes('C ') && pathD.startsWith('M ') && 
+                                pathD.includes('L ') && (pathD.match(/L /g)?.length !== 2)) {
+                              precisionPaths.push(path as SVGPathElement);
+                              console.log("Found precision path:", pathD);
+                            }
+                          });
+                          
+                          if (precisionPaths.length > 0) {
+                            // Check if vagueness overlaps with any precision path
+                            let foundIntersection = false;
+                            
+                            precisionPaths.forEach((path, i) => {
+                              const pathRect = path.getBoundingClientRect();
+                              
+                              // Get the center of the precision path
+                              const pathCenterX = pathRect.left + pathRect.width / 2;
+                              const pathCenterY = pathRect.top + pathRect.height / 2;
+                              
+                              // Get the center of the vague element
+                              const vagueCenterX = vagueRect.left + vagueRect.width / 2;
+                              const vagueCenterY = vagueRect.top + vagueRect.height / 2;
+                              
+                              // Calculate the distance from the vague center to the path center
+                              const distanceToCenter = Math.sqrt(
+                                Math.pow(vagueCenterX - pathCenterX, 2) + 
+                                Math.pow(vagueCenterY - pathCenterY, 2)
+                              );
+                              
+                              // Define a threshold distance from the center of the path
+                              const centerThreshold = pathRect.height * 0.5;
+                              
+                              // Simple box intersection test plus center proximity check
+                              const overlap = !(
+                                vagueRect.right < pathRect.left || 
+                                vagueRect.left > pathRect.right || 
+                                vagueRect.bottom < pathRect.top || 
+                                vagueRect.top > pathRect.bottom
+                              ) && distanceToCenter < centerThreshold;
+                              
+                              if (overlap) {
+                                console.log(`Overlap detected with precision path ${i} at center zone`);
+                                foundIntersection = true;
+                              }
+                            });
+                            
+                            // If intersection found, break the line and make meaning fall
+                            if (foundIntersection) {
+                              console.log("PRECISION LINE BROKEN - Starting snap and fall");
+                              setPrecisionLineErasing(true);
+                              
+                              // First snap the line
+                              precisionPaths.forEach(pathElement => {
+                                // Create a "snap" effect - make the line jagged then disappear
+                                // Original path
+                                const originalD = pathElement.getAttribute('d') || '';
+                                
+                                // Parse the path to get start and end points
+                                const pathMatch = originalD.match(/M\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)/);
+                                if (pathMatch) {
+                                  const x1 = parseFloat(pathMatch[1]);
+                                  const y1 = parseFloat(pathMatch[2]);
+                                  const x2 = parseFloat(pathMatch[3]);
+                                  const y2 = parseFloat(pathMatch[4]);
+                                  
+                                  // Calculate midpoint - this is where the break will happen
+                                  // Use the exact middle of the line
+                                  const midX = (x1 + x2) / 2;
+                                  const midY = (y1 + y2) / 2;
+                                  
+                                  // Hide the original path
+                                  pathElement.style.opacity = '0';
+                                  
+                                  // Create two new paths for the halves
+                                  const svgContainer = document.querySelector('svg.absolute');
+                                  if (svgContainer) {
+                                    // Create a group for bottom half and arrow to move together
+                                    const bottomGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                                    bottomGroup.style.transformOrigin = `${midX}px ${midY}px`;
+                                    svgContainer.appendChild(bottomGroup);
+                                    
+                                    // Create top half (from start to midpoint)
+                                    const topHalf = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                                    topHalf.setAttribute('d', `M ${x1} ${y1} L ${midX} ${midY}`);
+                                    topHalf.setAttribute('stroke', '#3b82f6'); // Blue
+                                    topHalf.setAttribute('stroke-width', '2.5');
+                                    topHalf.setAttribute('stroke-linecap', 'round');
+                                    topHalf.setAttribute('stroke-linejoin', 'round');
+                                    topHalf.setAttribute('fill', 'transparent');
+                                    topHalf.setAttribute('class', 'precision-line-half top-half');
+                                    topHalf.style.transformOrigin = `${midX}px ${midY}px`;
+                                    svgContainer.appendChild(topHalf);
+                                    
+                                    // Create bottom half (from midpoint to end) - this has the arrow
+                                    const bottomHalf = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                                    bottomHalf.setAttribute('d', `M ${midX} ${midY} L ${x2} ${y2}`);
+                                    bottomHalf.setAttribute('stroke', '#3b82f6'); // Blue
+                                    bottomHalf.setAttribute('stroke-width', '2.5');
+                                    bottomHalf.setAttribute('stroke-linecap', 'round');
+                                    bottomHalf.setAttribute('stroke-linejoin', 'round');
+                                    bottomHalf.setAttribute('fill', 'transparent');
+                                    bottomHalf.setAttribute('class', 'precision-line-half bottom-half');
+                                    bottomGroup.appendChild(bottomHalf);
+                                    
+                                    // Calculate a new arrow endpoint based on the shortened line
+                                    const arrowLength = Math.sqrt(Math.pow(x2 - midX, 2) + Math.pow(y2 - midY, 2));
+                                    const angle = Math.atan2(y2 - midY, x2 - midX);
+                                    
+                                    // Create a new arrow element that's properly positioned at the end of the bottom half
+                                    const arrowSize = 7;
+                                    
+                                    // Calculate arrow points based on the line's angle
+                                    const arrowLeftX = x2 - arrowSize * Math.cos(angle - Math.PI/6);
+                                    const arrowLeftY = y2 - arrowSize * Math.sin(angle - Math.PI/6);
+                                    
+                                    const arrowRightX = x2 - arrowSize * Math.cos(angle + Math.PI/6);
+                                    const arrowRightY = y2 - arrowSize * Math.sin(angle + Math.PI/6);
+                                    
+                                    // Create the arrow element with calculated path
+                                    const arrowElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                                    arrowElement.setAttribute('d', `M ${arrowLeftX} ${arrowLeftY} L ${x2} ${y2} L ${arrowRightX} ${arrowRightY}`);
+                                    arrowElement.setAttribute('stroke', '#3b82f6'); // Blue
+                                    arrowElement.setAttribute('stroke-width', '2.5');
+                                    arrowElement.setAttribute('stroke-linecap', 'round');
+                                    arrowElement.setAttribute('stroke-linejoin', 'round');
+                                    arrowElement.setAttribute('fill', 'transparent');
+                                    arrowElement.setAttribute('class', 'precision-line-arrow');
+                                    bottomGroup.appendChild(arrowElement);
+                                    
+                                    // Store references to animate later
+                                    (document as any).lineHalfElements = {
+                                      topHalf,
+                                      bottomHalf: bottomGroup,
+                                      arrowElement
+                                    };
+                                    
+                                    // Remove red dot code and start falling animation immediately
+                                    setTimeout(() => {
+                                      // Explicitly set these to start the animations
+                                      setLineHalvesFalling(true);
+                                      setLineBroken(true);
+                                      setMeaningFalling(true);
+                                      
+                                      console.log("Starting line halves falling animation");
+                                    }, 200);
+                                  }
+                                }
+                              });
+                            }
+                          }
+                        }
                       }
                     }}
                     onDragEnd={(e, info) => {
@@ -976,7 +1394,17 @@ export default function IntroPage() {
               <div className="grid grid-cols-2 w-full max-w-lg relative z-10">
                 <div className="flex justify-center">
                   <div ref={meaningRef} className="text-xl font-semibold">
-                    Meaning
+                    {meaningVisible && !hasLatchedToLine && (
+                      <motion.div
+                        style={{ 
+                          y: meaningPosition,
+                          rotate: meaningTilt,
+                          display: meaningVisible ? 'block' : 'none'
+                        }}
+                      >
+                        Meaning
+                      </motion.div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-center">
@@ -1025,7 +1453,7 @@ export default function IntroPage() {
               animate={
                 seesaw 
                   ? {
-                      rotateZ: [0, -1, 1, -0.5, 0.5, 0], // Subtle shake effect
+                      rotateZ: [0, -1.5, 1, -0.7, 0.4, 0], // More natural oscillation
                     }
                   : { rotateZ: lineRotation }
               }
@@ -1034,13 +1462,13 @@ export default function IntroPage() {
                   ? {
                       duration: 0.6,
                       ease: "easeInOut",
-                      times: [0, 0.2, 0.4, 0.6, 0.8, 1]
+                      times: [0, 0.2, 0.4, 0.6, 0.8, 1] // Even timing for oscillation
                     }
                   : { 
                       type: 'spring', 
-                      damping: 15, // Less damping for more natural oscillation
-                      stiffness: 60, // Lower stiffness for softer movement
-                      mass: 1.5,    // More mass for more physics-like movement
+                      damping: 15,
+                      stiffness: 60, 
+                      mass: 1.5,
                       duration: 2
                     }
               }
@@ -1070,7 +1498,75 @@ export default function IntroPage() {
                   Creativity
                 </div>
               )}
+              
+              {/* Meaning word attached to the line */}
+              {hasLatchedToLine && (
+                <div 
+                  className="text-xl font-semibold absolute"
+                  style={{ 
+                    left: '37%', 
+                    top: `-25px`, 
+                    zIndex: 20,
+                    transformOrigin: 'bottom center',
+                    transition: 'all 0.1s ease-out' // Smooth any position adjustments
+                  }}
+                >
+                  Meaning
+                </div>
+              )}
             </motion.div>
+            
+            {/* SVG container for line halves falling */}
+            {lineHalvesFalling && (
+              <div className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
+                <div className="precision-line-half top-half absolute" 
+                  style={{ 
+                    transform: `translateY(${lineTopHalfPosition}px) rotate(${lineHalvesRotation.top}deg)`,
+                  }}
+                />
+                <div className="precision-line-half bottom-half absolute" 
+                  style={{ 
+                    transform: `translateY(${lineBottomHalfPosition}px) rotate(${lineHalvesRotation.bottom}deg)`,
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Quote that appears after meaning falls - no container, just text */}
+            {quoteVisible && (
+              <motion.div 
+                style={{ 
+                  position: 'absolute',
+                  top: (document as any).brokenLineMidPoint?.y || vagueCoords.start.y + 450,
+                  marginTop: '100px',
+                  left: '25%', 
+                  width: '50%',
+                  zIndex: 20,
+                  textAlign: 'center'
+                }}
+                initial={{
+                  y: -200, // Start above
+                  opacity: 0
+                }}
+                animate={{ 
+                  y: 0, // Fall straight down
+                  opacity: 1
+                }}
+                transition={{ 
+                  type: "spring", 
+                  damping: 15,
+                  mass: 1.3,
+                  stiffness: 70,
+                  duration: 1.2,
+                  delay: 0 // No delay after lines disappear
+                }}
+              >
+                <p className="text-lg italic text-center mb-4">
+                  "Poetry is the art of creating imaginary gardens with real toads."
+                </p>
+                <p className="text-center" style={{ marginLeft: '150px', marginRight: '0px' }}>― Marianne Moore</p>
+              </motion.div>
+            )}
           </div>
         </div>
       </main>
