@@ -83,6 +83,7 @@ export default function IntroPage() {
   const vagueRef = useRef<HTMLDivElement>(null);
   const creativityRef = useRef<HTMLDivElement>(null);
   const horizontalLineRef = useRef<HTMLDivElement>(null);
+  const gardensRef = useRef<HTMLSpanElement>(null);
   
   const [precisionCoords, setPrecisionCoords] = useState({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
   const [vagueCoords, setVagueCoords] = useState({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
@@ -104,6 +105,10 @@ export default function IntroPage() {
   
   // Add state for color change when seesaw is balanced
   const [lineBalanced, setLineBalanced] = useState(false);
+  
+  // Track quote interaction state
+  const [gardensHighlighted, setGardensHighlighted] = useState(false);
+  const [gardensErased, setGardensErased] = useState(false);
   
   // Function to calculate coordinates based on element positions
   const calculateCoordinates = () => {
@@ -490,7 +495,7 @@ export default function IntroPage() {
     if (vagueDraggable && containerRef.current && vagueRef.current) {
       // Set z-index to ensure it's above other elements when dragging
       if (vagueRef.current) {
-        vagueRef.current.style.zIndex = "50";
+        vagueRef.current.style.zIndex = "1000"; // Much higher z-index
         vagueRef.current.style.position = "relative";
       }
     }
@@ -970,7 +975,7 @@ export default function IntroPage() {
                     {...(vagueDraggable ? {
                       drag: true,
                       dragMomentum: false,
-                      style: { cursor: 'grab', position: 'absolute', zIndex: 100 },
+                      style: { cursor: 'grab', position: 'absolute', zIndex: 1000 },
                       whileDrag: { cursor: 'grabbing' }
                     } : {})}
                     animate={
@@ -1027,6 +1032,40 @@ export default function IntroPage() {
                       // Get current element positions for intersection check
                       if (vagueRef.current && vagueDraggable) {
                         const vagueRect = vagueRef.current.getBoundingClientRect();
+                        
+                        // Check if "gardens" word should be highlighted
+                        if (gardensRef.current && quoteVisible && !gardensErased) {
+                          const gardensRect = gardensRef.current.getBoundingClientRect();
+                          
+                          // Check if vagueness is hovering over gardens
+                          const isOverGardens = !(
+                            vagueRect.right < gardensRect.left || 
+                            vagueRect.left > gardensRect.right || 
+                            vagueRect.bottom < gardensRect.top || 
+                            vagueRect.top > gardensRect.bottom
+                          );
+                          
+                          if (isOverGardens) {
+                            // Apply permanent erasing effect
+                            setGardensErased(true);
+                            
+                            // Apply blur and fade effect before disappearing
+                            if (gardensRef.current) {
+                              gardensRef.current.style.transition = 'opacity 0.6s ease-out, filter 0.6s ease-out, color 0.6s ease-out';
+                              gardensRef.current.style.filter = 'blur(5px)';
+                              gardensRef.current.style.opacity = '0.2';
+                              gardensRef.current.style.color = 'white';
+                              
+                              // Don't hide completely - keep the space
+                              setTimeout(() => {
+                                if (gardensRef.current) {
+                                  gardensRef.current.style.visibility = 'hidden';
+                                  // Keep the space by not changing display to none
+                                }
+                              }, 600);
+                            }
+                          }
+                        }
                         
                         // Check for vague line overlap if it's visible and not already erasing
                         if (showVagueLine && !vagueLineErasing) {
@@ -1551,7 +1590,8 @@ export default function IntroPage() {
                   left: '25%', 
                   width: '50%',
                   zIndex: 20,
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  pointerEvents: 'none' // Allow interaction with elements above
                 }}
                 initial={{
                   y: -200, // Start above
@@ -1571,7 +1611,13 @@ export default function IntroPage() {
                 }}
               >
                 <p className="text-lg italic text-center mb-4">
-                  "Poetry is the art of creating imaginary gardens with real toads."
+                  "Poetry is the art of creating imaginary <span ref={gardensRef} style={{
+                    opacity: gardensErased ? 0.2 : 1,
+                    color: gardensErased ? 'white' : 'inherit',
+                    visibility: gardensErased ? 'hidden' : 'visible',
+                    filter: gardensErased ? 'blur(5px)' : 'none',
+                    transition: 'opacity 0.6s ease-out, filter 0.6s ease-out, color 0.6s ease-out'
+                  }}>gardens</span> with real toads."
                 </p>
                 <p className="text-center" style={{ marginLeft: '150px', marginRight: '0px' }}>― Marianne Moore</p>
               </motion.div>
